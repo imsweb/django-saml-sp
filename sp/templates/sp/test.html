@@ -1,0 +1,45 @@
+<html>
+<head>
+    <title>IdP Test</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css" integrity="sha384-WskhaSGFgHYWDcbwN70/dfYBj47jz9qbsMId/iRN3ewGhXQFZCSftd1LZCfmhktB" crossorigin="anonymous" />
+</head>
+<body>
+    <div class="container">
+    <h2>Name ID</h2>
+    <table class="table table-bordered">
+        <tbody>
+            <tr>
+                <th>Name ID Format</th>
+                <td>{{ nameid_format }}</td>
+            </tr>
+            <tr>
+                <th>Name ID</th>
+                <td>{{ nameid }}</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h2>Attributes</h2>
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>SAML Attribute</th>
+                <th>Mapped Name</th>
+                <th>NameID</th>
+                <th>Value</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for attr, value in attrs %}
+                <tr>
+                    <td>{{ attr.saml_attribute }}</td>
+                    <td>{{ attr.mapped_name }}</td>
+                    <td>{% if attr.is_nameid %}&#10004;{% endif %}</td>
+                    <td>{{ value }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    </div>
+</body>
+</html>

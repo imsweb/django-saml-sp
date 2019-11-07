@@ -1,0 +1,23 @@
+{% load i18n %}
+<html>
+<head>
+    <title>{% trans "SP Test Application" %}</title>
+</head>
+<body>
+    <h1>{% trans "SP Test Application" %}</h1>
+    {% if user.is_authenticated %}
+        <strong>{% blocktrans with user=user %}You are logged in as {{ user }}{% endblocktrans %}</strong>
+        <p><a href="{% url 'logout' %}">{% trans "Log Out" %}</a></p>
+    {% else %}
+        <strong>{% trans "You are not logged in." %}</strong>
+        {% for sp in sps %}
+            <h2>{{ sp }}</h2>
+            <ul>
+                {% for idp in sp.idps.all %}
+                    <li><a href="{{ idp.get_absolute_url }}">{{ idp }}</a></li>
+                {% endfor %}
+            </ul>
+        {% endfor %}
+    {% endif %}
+</body>
+</html>
