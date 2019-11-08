@@ -1,3 +1,6 @@
+import datetime
+
+from django.conf import settings
 from django.contrib import auth
 from django.core import signing
 from django.http import HttpResponse
@@ -21,7 +24,14 @@ def metadata(request, sp_slug):
 @require_POST
 def acs(request, sp_slug):
     sp = get_object_or_404(SP, slug=sp_slug, is_active=True)
-    state = signing.loads(request.POST["RelayState"], max_age=300)
+    if request.POST.get("RelayState"):
+        state = signing.loads(request.POST["RelayState"], max_age=300)
+    else:
+        # IdP-initiated logins don't have a RelayState, check the referer to see which IdP it came from.
+        referer = request.META.get("HTTP_REFERER")
+        for idp in sp.idps.filter(is_active=True):
+            if referer == idp.settings["idp"]["singleSignOnService"]["url"]:
+                state = {"idp": idp.slug, "test": False, "redir": ""}
     idp = get_object_or_404(sp.idps, slug=state["idp"], is_active=True)
     saml = OneLogin_Saml2_Auth(idp.prepare_request(request), old_settings=idp.settings)
     saml.process_response()
@@ -38,7 +48,7 @@ def acs(request, sp_slug):
             return render(
                 request,
                 "sp/test.html",
-                {"attrs": attrs, "nameid": saml.get_nameid(), "nameid_format": saml.get_nameid_format(),},
+                {"idp": idp, "attrs": attrs, "nameid": saml.get_nameid(), "nameid_format": saml.get_nameid_format()},
             )
         else:
             last_login = timezone.now()
@@ -49,7 +59,13 @@ def acs(request, sp_slug):
             user = auth.authenticate(request, idp=idp, saml=saml)
             if user:
                 auth.login(request, user)
-            return redirect("/")
+                if idp.respect_expiration and settings.SESSION_SERIALIZER.endswith("PickleSerializer"):
+                    try:
+                        dt = datetime.datetime.fromtimestamp(saml.get_session_expiration(), tz=datetime.timezone.utc)
+                        request.session.set_expiry(dt)
+                    except TypeError:
+                        pass
+            return redirect(idp.get_login_redirect(state.get("redir")))
 
 
 def login(request, sp_slug, idp_slug, test=False, verify=False):
@@ -57,5 +73,5 @@ def login(request, sp_slug, idp_slug, test=False, verify=False):
     idp = get_object_or_404(sp.idps, slug=idp_slug, is_active=True)
     saml = OneLogin_Saml2_Auth(idp.prepare_request(request), old_settings=idp.settings)
     reauth = verify or "reauth" in request.GET
-    state = signing.dumps({"idp": idp_slug, "test": test,})
+    state = signing.dumps({"idp": idp_slug, "test": test, "redir": request.GET.get(auth.REDIRECT_FIELD_NAME, "")})
     return redirect(saml.login(state, force_authn=reauth))

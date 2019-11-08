@@ -1,10 +1,11 @@
 from setuptools import find_packages, setup
 
+app = __import__("sp")
 
 setup(
     name="django-saml-sp",
-    version="0.0.1",
-    description="A Django application for running a SAML SP.",
+    version=app.__version__,
+    description="A Django application for running one or more SAML service providers (SP).",
     author="Dan Watson",
     author_email="watsond@imsweb.com",
     url="https://github.com/imsweb/django-saml-sp",
@@ -19,5 +20,8 @@ setup(
         "License :: OSI Approved :: BSD License",
         "Operating System :: OS Independent",
         "Programming Language :: Python",
+        "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3 :: Only",
     ],
+    project_urls={"Source": "https://github.com/imsweb/django-saml-sp"},
 )

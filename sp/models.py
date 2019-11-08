@@ -1,35 +1,39 @@
-from __future__ import unicode_literals
+import collections
+import datetime
+import json
+from urllib.parse import urlparse
 
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.x509.oid import NameOID
+from django.conf import settings
 from django.db import models
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.translation import ugettext_lazy as _
 from onelogin.saml2.idp_metadata_parser import OneLogin_Saml2_IdPMetadataParser
-
-from urllib.parse import urlparse
-
-import collections
-import datetime
-import json
 
 
 class SP(models.Model):
     name = models.CharField(max_length=200)
     slug = models.CharField(max_length=100, unique=True)
-    base_url = models.CharField(max_length=200)
+    base_url = models.CharField(
+        max_length=200, help_text=_("Root URL for the site, including http/https, no trailing slash.")
+    )
     contact_name = models.CharField(max_length=100)
     contact_email = models.CharField(max_length=100)
     x509_certificate = models.TextField(blank=True)
     private_key = models.TextField(blank=True)
-    is_active = models.BooleanField(default=True)
+    login_redirect = models.CharField(
+        max_length=200, blank=True, help_text=_("URL name or path to redirect after a successful login.")
+    )
     last_login = models.DateTimeField(null=True, blank=True, default=None)
+    is_active = models.BooleanField(default=True)
 
     class Meta:
-        verbose_name = "service provider"
+        verbose_name = _("service provider")
 
     def __str__(self):
         return self.name
@@ -51,7 +55,7 @@ class SP(models.Model):
                 "x509cert": self.x509_certificate,
                 "privateKey": self.private_key,
             },
-            "contactPerson": {"technical": {"givenName": self.contact_name, "emailAddress": self.contact_email,},},
+            "contactPerson": {"technical": {"givenName": self.contact_name, "emailAddress": self.contact_email}},
         }
 
     def generate_certificate(self):
@@ -83,20 +87,30 @@ class SP(models.Model):
 
 
 class IdP(models.Model):
-    sp = models.ForeignKey(SP, related_name="idps", on_delete=models.CASCADE)
+    sp = models.ForeignKey(SP, verbose_name=_("service provider"), related_name="idps", on_delete=models.CASCADE)
     name = models.CharField(max_length=200)
     slug = models.CharField(max_length=100)
     metadata_url = models.CharField("Metadata URL", max_length=500, blank=True)
-    metadata_xml = models.TextField("Metadata XML", blank=True)
-    lowercase_encoding = models.BooleanField(default=False, help_text="Check this if using ADFS.")
-    saml_settings = models.TextField(blank=True, help_text="Settings imported and used by the python-saml library.")
+    verify_metadata_cert = models.BooleanField(_("Verify metadata URL certificate"), default=True)
+    metadata_xml = models.TextField(_("Metadata XML"), blank=True)
+    lowercase_encoding = models.BooleanField(default=False, help_text=_("Check this if using ADFS."))
+    saml_settings = models.TextField(blank=True, help_text=_("Settings imported and used by the python-saml library."))
     last_import = models.DateTimeField(null=True, blank=True)
     notes = models.TextField(blank=True)
-    is_active = models.BooleanField(default=True)
+    respect_expiration = models.BooleanField(
+        default=False,
+        help_text=_(
+            "Expires the Django session based on the IdP session expiration. Only works when using SESSION_SERIALIZER=PickleSerializer."
+        ),
+    )
+    login_redirect = models.CharField(
+        max_length=200, blank=True, help_text=_("URL name or path to redirect after a successful login.")
+    )
     last_login = models.DateTimeField(null=True, blank=True, default=None)
+    is_active = models.BooleanField(default=True)
 
     class Meta:
-        verbose_name = "identity provider"
+        verbose_name = _("identity provider")
         unique_together = [
             ("sp", "slug"),
         ]
@@ -107,8 +121,13 @@ class IdP(models.Model):
     def get_absolute_url(self):
         return reverse("sp-idp-login", kwargs={"sp_slug": self.sp.slug, "idp_slug": self.slug})
 
+    get_login_url = get_absolute_url
+
     def get_test_url(self):
         return reverse("sp-idp-test", kwargs={"sp_slug": self.sp.slug, "idp_slug": self.slug})
+
+    def get_verify_url(self):
+        return reverse("sp-idp-verify", kwargs={"sp_slug": self.sp.slug, "idp_slug": self.slug})
 
     def prepare_request(self, request):
         return {
@@ -128,9 +147,11 @@ class IdP(models.Model):
         return settings_dict
 
     def import_metadata(self):
-        self.saml_settings = json.dumps(
-            OneLogin_Saml2_IdPMetadataParser.parse_remote(self.metadata_url, validate_cert=False)
-        )
+        if self.metadata_url:
+            self.metadata_xml = OneLogin_Saml2_IdPMetadataParser.get_metadata(
+                self.metadata_url, validate_cert=self.verify_metadata_cert
+            ).decode("utf-8")
+        self.saml_settings = json.dumps(OneLogin_Saml2_IdPMetadataParser.parse(self.metadata_xml))
         self.last_import = timezone.now()
         self.save()
 
@@ -149,16 +170,21 @@ class IdP(models.Model):
         else:
             return saml.get_nameid()
 
+    def get_login_redirect(self, redir=None):
+        return redir or self.login_redirect or self.sp.login_redirect or settings.LOGIN_REDIRECT_URL
+
 
 class IdPAttribute(models.Model):
-    idp = models.ForeignKey(IdP, related_name="attributes", on_delete=models.CASCADE)
+    idp = models.ForeignKey(
+        IdP, verbose_name=_("identity provider"), related_name="attributes", on_delete=models.CASCADE
+    )
     saml_attribute = models.CharField(max_length=200)
     mapped_name = models.CharField(max_length=200, blank=True)
-    is_nameid = models.BooleanField("Is NameID", default=False)
+    is_nameid = models.BooleanField(_("Is NameID"), default=False)
 
     class Meta:
-        verbose_name = "identity provider attribute"
-        verbose_name_plural = "identity provider attributes"
+        verbose_name = _("identity provider attribute")
+        verbose_name_plural = _("identity provider attributes")
         unique_together = [
             ("idp", "saml_attribute"),
         ]

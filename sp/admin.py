@@ -29,7 +29,8 @@ class IdPAdmin(admin.ModelAdmin):
 
 
 class SPAdmin(admin.ModelAdmin):
-    list_display = ("name", "slug", "base_url", "contact_name", "contact_email")
+    list_display = ("name", "slug", "base_url", "contact_name", "contact_email", "is_active", "last_login")
+    list_filter = ("is_active",)
     actions = ("generate_certificate",)
 
     def generate_certificate(self, request, queryset):

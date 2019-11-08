@@ -24,7 +24,10 @@ class Command(BaseCommand):
             sp.generate_certificate()
             print('Creating "local" IdP at http://localhost:8080/simplesaml/saml2/idp/metadata.php')
             idp = sp.idps.create(
-                name="Local", slug="local", metadata_url="http://localhost:8080/simplesaml/saml2/idp/metadata.php",
+                name="Local",
+                slug="local",
+                metadata_url="http://localhost:8080/simplesaml/saml2/idp/metadata.php",
+                respect_expiration=True,
             )
             # The local IdP sends an email address, but it isn't the nameid. Override it to be our nameid, AND set the
             # email field on User.

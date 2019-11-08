@@ -68,3 +68,6 @@ AUTHENTICATION_BACKENDS = [
     "django.contrib.auth.backends.ModelBackend",
     "sp.backends.SAMLAuthenticationBackend",
 ]
+
+LOGIN_REDIRECT_URL = "home"
+SESSION_SERIALIZER = "django.contrib.sessions.serializers.PickleSerializer"

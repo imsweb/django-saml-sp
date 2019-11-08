@@ -2,7 +2,6 @@ from django.urls import path
 
 from . import views
 
-
 urlpatterns = [
     path("metadata/<sp_slug>/", views.metadata, name="sp-metadata"),
     path("acs/<sp_slug>/", views.acs, name="sp-acs"),
