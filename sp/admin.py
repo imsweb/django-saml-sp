@@ -2,7 +2,7 @@ from __future__ import unicode_literals
 
 from django.contrib import admin
 
-from .models import SP, IdP, IdPAttribute
+from .models import IdP, IdPAttribute
 
 
 class IdPAttributeInline(admin.TabularInline):
@@ -11,10 +11,35 @@ class IdPAttributeInline(admin.TabularInline):
 
 
 class IdPAdmin(admin.ModelAdmin):
-    list_display = ("name", "slug", "metadata_url", "last_import", "is_active", "last_login")
+    list_display = (
+        "name",
+        "slug",
+        "last_import",
+        "get_entity_id",
+        "get_acs",
+        "is_active",
+        "last_login",
+    )
     list_filter = ("is_active",)
-    actions = ("import_metadata",)
+    actions = ("import_metadata", "generate_certificates")
     inlines = (IdPAttributeInline,)
+    fieldsets = (
+        (None, {"fields": ("name", "slug", "base_url", "notes", "is_active")}),
+        (
+            "SP Settings",
+            {"fields": ("contact_name", "contact_email", "x509_certificate", "private_key", "certificate_expires")},
+        ),
+        (
+            "IdP Metadata",
+            {"fields": ("metadata_url", "verify_metadata_cert", "metadata_xml", "lowercase_encoding", "last_import")},
+        ),
+        ("Logins", {"fields": ("respect_expiration", "login_redirect", "last_login")}),
+    )
+    readonly_fields = ("last_import", "last_login")
+
+    def generate_certificates(self, request, queryset):
+        for idp in queryset:
+            idp.generate_certificate()
 
     def import_metadata(self, request, queryset):
         for idp in queryset:
@@ -28,15 +53,4 @@ class IdPAdmin(admin.ModelAdmin):
             pass
 
 
-class SPAdmin(admin.ModelAdmin):
-    list_display = ("name", "slug", "base_url", "contact_name", "contact_email", "is_active", "last_login")
-    list_filter = ("is_active",)
-    actions = ("generate_certificate",)
-
-    def generate_certificate(self, request, queryset):
-        for sp in queryset:
-            sp.generate_certificate()
-
-
 admin.site.register(IdP, IdPAdmin)
-admin.site.register(SP, SPAdmin)

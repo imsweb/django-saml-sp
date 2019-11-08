@@ -10,14 +10,11 @@
         <p><a href="{% url 'logout' %}">{% trans "Log Out" %}</a></p>
     {% else %}
         <strong>{% trans "You are not logged in." %}</strong>
-        {% for sp in sps %}
-            <h2>{{ sp }}</h2>
-            <ul>
-                {% for idp in sp.idps.all %}
-                    <li><a href="{{ idp.get_absolute_url }}">{{ idp }}</a></li>
-                {% endfor %}
-            </ul>
-        {% endfor %}
+        <ul>
+            {% for idp in idps %}
+                <li><a href="{{ idp.get_login_url }}">{{ idp }}</a></li>
+            {% endfor %}
+        </ul>
     {% endif %}
 </body>
 </html>

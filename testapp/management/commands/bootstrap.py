@@ -1,34 +1,29 @@
 from django.contrib.auth import get_user_model
 from django.core.management.base import BaseCommand
 
-from sp.models import SP
+from sp.models import IdP
 
 
 class Command(BaseCommand):
-    help = 'Bootstraps the SP with a default "admin" user'
+    help = 'Bootstraps the SP with a default "admin" user and a local test IdP.'
 
     def handle(self, *args, **options):
         User = get_user_model()
         if User.objects.count() == 0:
             print('Creating default "admin" account with password "letmein" -- change this immediately!')
             User.objects.create_superuser("admin", "admin@example.com", "letmein", first_name="Admin", last_name="User")
-        if SP.objects.count() == 0:
-            print('Creating "default" SP for http://localhost:8000')
-            sp = SP.objects.create(
-                name="Default Service Provider",
-                slug="default",
+        if IdP.objects.count() == 0:
+            print('Creating "local" IdP for http://localhost:8000')
+            idp = IdP.objects.create(
+                name="Local SimpleSAML Provider",
+                slug="local",
                 base_url="http://localhost:8000",
                 contact_name="Admin User",
                 contact_email="admin@example.com",
-            )
-            sp.generate_certificate()
-            print('Creating "local" IdP at http://localhost:8080/simplesaml/saml2/idp/metadata.php')
-            idp = sp.idps.create(
-                name="Local",
-                slug="local",
                 metadata_url="http://localhost:8080/simplesaml/saml2/idp/metadata.php",
                 respect_expiration=True,
             )
+            idp.generate_certificate()
             # The local IdP sends an email address, but it isn't the nameid. Override it to be our nameid, AND set the
             # email field on User.
             idp.attributes.create(saml_attribute="email", mapped_name="email", is_nameid=True)

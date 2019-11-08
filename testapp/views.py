@@ -1,7 +1,7 @@
 from django.shortcuts import render
 
-from sp.models import SP
+from sp.models import IdP
 
 
 def home(request):
-    return render(request, "home.html", {"sps": SP.objects.filter(is_active=True)})
+    return render(request, "home.html", {"idps": IdP.objects.filter(is_active=True)})
