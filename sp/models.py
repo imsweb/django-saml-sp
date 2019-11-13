@@ -12,6 +12,7 @@ from django.conf import settings
 from django.db import models
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.module_loading import import_string
 from django.utils.translation import ugettext_lazy as _
 from onelogin.saml2.idp_metadata_parser import OneLogin_Saml2_IdPMetadataParser
 
@@ -54,6 +55,8 @@ class IdP(models.Model):
     )
     last_login = models.DateTimeField(null=True, blank=True, default=None)
     is_active = models.BooleanField(default=True)
+    authenticate_method = models.CharField(max_length=200, default="sp.utils.authenticate")
+    login_method = models.CharField(max_length=200, default="sp.utils.login")
 
     class Meta:
         verbose_name = _("identity provider")
@@ -170,6 +173,12 @@ class IdP(models.Model):
 
     def get_login_redirect(self, redir=None):
         return redir or self.login_redirect or settings.LOGIN_REDIRECT_URL
+
+    def authenticate(self, request, saml):
+        return import_string(self.authenticate_method)(request, self, saml)
+
+    def login(self, request, user, saml):
+        return import_string(self.login_method)(request, user, self, saml)
 
 
 class IdPAttribute(models.Model):

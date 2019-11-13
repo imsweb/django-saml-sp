@@ -35,6 +35,7 @@ class IdPAdmin(admin.ModelAdmin):
             {"fields": ("metadata_url", "verify_metadata_cert", "metadata_xml", "lowercase_encoding", "last_import")},
         ),
         ("Logins", {"fields": ("respect_expiration", "login_redirect", "last_login")}),
+        ("Advanced", {"classes": ("collapse",), "fields": ("authenticate_method", "login_method")}),
     )
     readonly_fields = ("last_import", "last_login")
 

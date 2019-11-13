@@ -2,28 +2,32 @@
 <html>
 <head>
     <title>{% trans "SP Test Application" %}</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
 </head>
 <body>
-    <h1>{% trans "SP Test Application" %}</h1>
-    {% if user.is_authenticated %}
-        <strong>{% blocktrans with user=user %}You are logged in as {{ user }}{% endblocktrans %}</strong>
-        <p>
-            <a href="{{ idp.get_test_url }}">{% trans "Test" %}</a> -
-            <a href="{{ idp.get_verify_url }}">{% trans "Verify" %}</a> -
-            <a href="{% url 'logout' %}">{% trans "Log Out" %}</a>
-        </p>
-    {% else %}
-        <strong>{% trans "You are not logged in." %}</strong>
-        <ul>
-            {% for idp in idps %}
-                <li>
-                    {{ idp }} -
-                    <a href="{{ idp.get_login_url }}">{% trans "Login" %}</a> -
-                    <a href="{{ idp.get_test_url }}">{% trans "Test" %}</a> -
-                    <a href="{{ idp.get_verify_url }}">{% trans "Verify" %}</a>
-                </li>
-            {% endfor %}
-        </ul>
-    {% endif %}
+    <div class="container">
+        <h1 class="mt-2 mb-4 pb-2 border-bottom">{% trans "SP Test Application" %}</h1>
+        {% if user.is_authenticated %}
+            <p><strong>{% blocktrans with user=user idp=idp %}You are logged in as {{ user }} via {{ idp }}.{% endblocktrans %}</strong></p>
+            <p>
+                <a class="btn btn-sm btn-secondary" href="{{ idp.get_test_url }}">{% trans "Test" %}</a>
+                <a class="btn btn-sm btn-secondary" href="{{ idp.get_verify_url }}">{% trans "Verify" %}</a>
+                <a class="btn btn-sm btn-secondary" href="{% url 'logout' %}">{% trans "Log Out" %}</a>
+            </p>
+        {% else %}
+            <p><strong>{% trans "You are not logged in." %}</strong></p>
+            <ul class="list-group">
+                {% for idp in idps %}
+                    <li class="list-group-item">
+                        {{ idp }}
+                        <span class="float-right">
+                            <a href="{{ idp.get_login_url }}">{% trans "Login" %}</a> or
+                            <a href="{{ idp.get_test_url }}">{% trans "Test" %}</a>
+                        </span>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+    </div>
 </body>
 </html>

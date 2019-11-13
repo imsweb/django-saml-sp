@@ -1,8 +1,8 @@
 from django.shortcuts import render
 
 from sp.models import IdP
+from sp.utils import get_session_idp
 
 
 def home(request):
-    idp = IdP.objects.filter(slug=request.session.get("idp")).first()
-    return render(request, "home.html", {"idp": idp, "idps": IdP.objects.filter(is_active=True)})
+    return render(request, "home.html", {"idp": get_session_idp(request), "idps": IdP.objects.filter(is_active=True)})

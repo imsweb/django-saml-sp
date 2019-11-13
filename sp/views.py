@@ -1,7 +1,4 @@
-import datetime
-
-from django.conf import settings
-from django.contrib import auth
+from django.contrib.auth import REDIRECT_FIELD_NAME
 from django.core import signing
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -25,15 +22,21 @@ def metadata(request, idp_slug):
 def acs(request, idp_slug):
     idp = get_object_or_404(IdP, slug=idp_slug, is_active=True)
     if request.POST.get("RelayState"):
+        # Login with state relayed from our application.
         state = signing.loads(request.POST["RelayState"], max_age=300)
     else:
+        # IdP-initiated login.
         state = {"test": False, "verify": False, "redir": ""}
     saml = OneLogin_Saml2_Auth(idp.prepare_request(request), old_settings=idp.settings)
     saml.process_response()
     errors = saml.get_errors()
     if errors:
-        text = "An error occurred processing your request:\n%s\n%s" % (",".join(errors), saml.get_last_error_reason())
-        return HttpResponse(text, content_type="text/plain", status=500)
+        return render(
+            request,
+            "sp/error.html",
+            {"idp": idp, "state": state, "errors": errors, "reason": saml.get_last_error_reason()},
+            status=500,
+        )
     else:
         if state.get("test", False):
             attrs = []
@@ -46,33 +49,25 @@ def acs(request, idp_slug):
                 {"idp": idp, "attrs": attrs, "nameid": saml.get_nameid(), "nameid_format": saml.get_nameid_format()},
             )
         elif state.get("verify", False):
-            user = auth.authenticate(request, idp=idp, saml=saml)
+            user = idp.authenticate(request, saml)
             if user == request.user:
                 return redirect(idp.get_login_redirect(state.get("redir")))
             else:
-                return HttpResponse("Incorrect user.", status=500)
+                return render(request, "sp/unauth.html", {"idp": idp, "verify": True}, status=401)
         else:
-            last_login = timezone.now()
-            idp.last_login = last_login
-            idp.save(update_fields=("last_login",))
-            user = auth.authenticate(request, idp=idp, saml=saml)
+            user = idp.authenticate(request, saml)
             if user:
-                auth.login(request, user)
-                request.session["idp"] = idp.slug
-                if idp.respect_expiration and settings.SESSION_SERIALIZER.endswith("PickleSerializer"):
-                    try:
-                        dt = datetime.datetime.fromtimestamp(saml.get_session_expiration(), tz=datetime.timezone.utc)
-                        request.session.set_expiry(dt)
-                    except TypeError:
-                        pass
-            return redirect(idp.get_login_redirect(state.get("redir")))
+                idp.login(request, user, saml)
+                idp.last_login = timezone.now()
+                idp.save(update_fields=("last_login",))
+                return redirect(idp.get_login_redirect(state.get("redir")))
+            else:
+                return render(request, "sp/unauth.html", {"idp": idp, "verify": False}, status=401)
 
 
 def login(request, idp_slug, test=False, verify=False):
     idp = get_object_or_404(IdP, slug=idp_slug, is_active=True)
     saml = OneLogin_Saml2_Auth(idp.prepare_request(request), old_settings=idp.settings)
     reauth = verify or "reauth" in request.GET
-    state = signing.dumps(
-        {"idp": idp_slug, "test": test, "verify": verify, "redir": request.GET.get(auth.REDIRECT_FIELD_NAME, "")}
-    )
+    state = signing.dumps({"test": test, "verify": verify, "redir": request.GET.get(REDIRECT_FIELD_NAME, "")})
     return redirect(saml.login(state, force_authn=reauth))
