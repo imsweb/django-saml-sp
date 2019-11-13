@@ -4,4 +4,5 @@ from sp.models import IdP
 
 
 def home(request):
-    return render(request, "home.html", {"idps": IdP.objects.filter(is_active=True)})
+    idp = IdP.objects.filter(slug=request.session.get("idp")).first()
+    return render(request, "home.html", {"idp": idp, "idps": IdP.objects.filter(is_active=True)})

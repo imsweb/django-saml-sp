@@ -27,7 +27,7 @@ def acs(request, idp_slug):
     if request.POST.get("RelayState"):
         state = signing.loads(request.POST["RelayState"], max_age=300)
     else:
-        state = {"test": False, "redir": ""}
+        state = {"test": False, "verify": False, "redir": ""}
     saml = OneLogin_Saml2_Auth(idp.prepare_request(request), old_settings=idp.settings)
     saml.process_response()
     errors = saml.get_errors()
@@ -45,6 +45,12 @@ def acs(request, idp_slug):
                 "sp/test.html",
                 {"idp": idp, "attrs": attrs, "nameid": saml.get_nameid(), "nameid_format": saml.get_nameid_format()},
             )
+        elif state.get("verify", False):
+            user = auth.authenticate(request, idp=idp, saml=saml)
+            if user == request.user:
+                return redirect(idp.get_login_redirect(state.get("redir")))
+            else:
+                return HttpResponse("Incorrect user.", status=500)
         else:
             last_login = timezone.now()
             idp.last_login = last_login
@@ -52,6 +58,7 @@ def acs(request, idp_slug):
             user = auth.authenticate(request, idp=idp, saml=saml)
             if user:
                 auth.login(request, user)
+                request.session["idp"] = idp.slug
                 if idp.respect_expiration and settings.SESSION_SERIALIZER.endswith("PickleSerializer"):
                     try:
                         dt = datetime.datetime.fromtimestamp(saml.get_session_expiration(), tz=datetime.timezone.utc)
@@ -65,5 +72,7 @@ def login(request, idp_slug, test=False, verify=False):
     idp = get_object_or_404(IdP, slug=idp_slug, is_active=True)
     saml = OneLogin_Saml2_Auth(idp.prepare_request(request), old_settings=idp.settings)
     reauth = verify or "reauth" in request.GET
-    state = signing.dumps({"idp": idp_slug, "test": test, "redir": request.GET.get(auth.REDIRECT_FIELD_NAME, "")})
+    state = signing.dumps(
+        {"idp": idp_slug, "test": test, "verify": verify, "redir": request.GET.get(auth.REDIRECT_FIELD_NAME, "")}
+    )
     return redirect(saml.login(state, force_authn=reauth))

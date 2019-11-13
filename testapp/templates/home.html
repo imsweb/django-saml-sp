@@ -7,12 +7,21 @@
     <h1>{% trans "SP Test Application" %}</h1>
     {% if user.is_authenticated %}
         <strong>{% blocktrans with user=user %}You are logged in as {{ user }}{% endblocktrans %}</strong>
-        <p><a href="{% url 'logout' %}">{% trans "Log Out" %}</a></p>
+        <p>
+            <a href="{{ idp.get_test_url }}">{% trans "Test" %}</a> -
+            <a href="{{ idp.get_verify_url }}">{% trans "Verify" %}</a> -
+            <a href="{% url 'logout' %}">{% trans "Log Out" %}</a>
+        </p>
     {% else %}
         <strong>{% trans "You are not logged in." %}</strong>
         <ul>
             {% for idp in idps %}
-                <li><a href="{{ idp.get_login_url }}">{{ idp }}</a></li>
+                <li>
+                    {{ idp }} -
+                    <a href="{{ idp.get_login_url }}">{% trans "Login" %}</a> -
+                    <a href="{{ idp.get_test_url }}">{% trans "Test" %}</a> -
+                    <a href="{{ idp.get_verify_url }}">{% trans "Verify" %}</a>
+                </li>
             {% endfor %}
         </ul>
     {% endif %}

@@ -15,6 +15,7 @@ class IdPAdmin(admin.ModelAdmin):
         "name",
         "slug",
         "last_import",
+        "certificate_expires",
         "get_entity_id",
         "get_acs",
         "is_active",
