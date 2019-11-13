@@ -37,7 +37,11 @@ class IdPAdmin(admin.ModelAdmin):
         ("Logins", {"fields": ("respect_expiration", "login_redirect", "last_login")}),
         ("Advanced", {"classes": ("collapse",), "fields": ("authenticate_method", "login_method")}),
     )
+    prepopulated_fields = {"slug": ("name",)}
     readonly_fields = ("last_import", "last_login")
+
+    def get_changeform_initial_data(self, request):
+        return {"base_url": "{}://{}".format(request.scheme, request.get_host())}
 
     def generate_certificates(self, request, queryset):
         for idp in queryset:
