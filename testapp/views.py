@@ -1,5 +1,4 @@
 from django.shortcuts import render
-
 from sp.models import IdP
 from sp.utils import get_session_idp
 

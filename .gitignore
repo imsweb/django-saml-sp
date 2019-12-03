@@ -5,3 +5,4 @@ __pycache__
 /db.sqlite3
 /dist
 /build
+/pip-wheel-metadata

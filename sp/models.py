@@ -8,13 +8,14 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.x509.oid import NameOID
+from onelogin.saml2.idp_metadata_parser import OneLogin_Saml2_IdPMetadataParser
+
 from django.conf import settings
 from django.db import models
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.module_loading import import_string
 from django.utils.translation import ugettext_lazy as _
-from onelogin.saml2.idp_metadata_parser import OneLogin_Saml2_IdPMetadataParser
 
 
 class IdP(models.Model):
@@ -91,7 +92,7 @@ class IdP(models.Model):
             "https": "on" if request.is_secure() else "off",
             "http_host": request.get_host(),
             "script_name": request.path_info,
-            "server_port": request.get_port(),
+            "server_port": 443 if request.is_secure() else request.get_port(),
             "get_data": request.GET.copy(),
             "post_data": request.POST.copy(),
             "lowercase_urlencoding": self.lowercase_encoding,

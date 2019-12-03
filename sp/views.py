@@ -1,3 +1,6 @@
+from onelogin.saml2.auth import OneLogin_Saml2_Auth
+from onelogin.saml2.settings import OneLogin_Saml2_Settings
+
 from django.contrib.auth import REDIRECT_FIELD_NAME
 from django.core import signing
 from django.http import HttpResponse
@@ -5,8 +8,6 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
-from onelogin.saml2.auth import OneLogin_Saml2_Auth
-from onelogin.saml2.settings import OneLogin_Saml2_Settings
 
 from .models import IdP
 
