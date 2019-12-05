@@ -12,6 +12,9 @@ class SAMLAuthenticationBackend(ModelBackend):
         user, created = UserModel._default_manager.get_or_create(**{UserModel.USERNAME_FIELD: nameid})
         update_fields = []
         always_update = idp.attributes.filter(always_update=True).values_list('mapped_name', flat=True)
+        if created:
+            default_field_values = {default.field: [default.value] for default in idp.user_defaults.all()}
+            attrs.update(default_field_values)
         for field, values in attrs.items():
             if created or field in always_update:
                 try:
