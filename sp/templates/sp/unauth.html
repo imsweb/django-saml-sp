@@ -8,7 +8,8 @@
 <body>
     <div class="container">
         <h1 class="mt-2 mb-4 pb-2 border-bottom">{% if verify %}{% trans "Verification Error" %}{% else %}{% trans "Authentication Error" %}{% endif %}</h1>
-        {% if verify %}<p>{% blocktrans with user=user %}Expected verification credentials for {{ user }}.{% endblocktrans %}</p>{% endif %}
+        <p>{% blocktrans with nameid=nameid %}Could not authenticate user "{{ nameid }}".{% endblocktrans %}</p>
+        {% if verify %}<p>{% blocktrans with user=user %}Expected verification credentials for "{{ user }}".{% endblocktrans %}</p>{% endif %}
     </div>
 </body>
 </html>

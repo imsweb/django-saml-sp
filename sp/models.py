@@ -8,21 +8,23 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.x509.oid import NameOID
-from onelogin.saml2.idp_metadata_parser import OneLogin_Saml2_IdPMetadataParser
-
 from django.conf import settings
 from django.db import models
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.module_loading import import_string
 from django.utils.translation import ugettext_lazy as _
+from onelogin.saml2.idp_metadata_parser import OneLogin_Saml2_IdPMetadataParser
 
 
 class IdP(models.Model):
     name = models.CharField(max_length=200)
     slug = models.CharField(max_length=100, unique=True)
     base_url = models.CharField(
-        max_length=200, help_text=_("Root URL for the site, including http/https, no trailing slash.")
+        _("Base URL"), max_length=200, help_text=_("Root URL for the site, including http/https, no trailing slash.")
+    )
+    entity_id = models.CharField(
+        _("Entity ID"), max_length=200, blank=True, help_text=_("Leave blank to automatically use the metadata URL.")
     )
     contact_name = models.CharField(max_length=100)
     contact_email = models.EmailField(max_length=100)
@@ -44,6 +46,8 @@ class IdP(models.Model):
     )
     last_import = models.DateTimeField(null=True, blank=True)
     notes = models.TextField(blank=True)
+    auth_case_sensitive = models.BooleanField(_("NameID is case sensitive"), default=True)
+    create_users = models.BooleanField(_("Create users that do not already exist"), default=True)
     respect_expiration = models.BooleanField(
         _("Respect IdP session expiration"),
         default=False,
@@ -66,7 +70,10 @@ class IdP(models.Model):
         return self.name
 
     def get_entity_id(self):
-        return self.base_url + self.get_absolute_url()
+        if self.entity_id:
+            return self.entity_id
+        else:
+            return self.base_url + self.get_absolute_url()
 
     get_entity_id.short_description = _("Entity ID")
 
@@ -187,11 +194,11 @@ class IdPUserDefaultValue(models.Model):
         IdP, verbose_name=_("identity provider"), related_name="user_defaults", on_delete=models.CASCADE
     )
     field = models.CharField(max_length=200)
-    value = models.CharField(max_length=200)
+    value = models.TextField()
 
     class Meta:
-        verbose_name = _("identity provider user default value")
-        verbose_name_plural = _("identity provider user default values")
+        verbose_name = _("user default value")
+        verbose_name_plural = _("user default values")
         unique_together = [
             ("idp", "field"),
         ]
@@ -210,12 +217,14 @@ class IdPAttribute(models.Model):
     always_update = models.BooleanField(
         _("Always Update"),
         default=False,
-        help_text='If checked, the mapped_name for this attribute will always be updated upon successful authentication.'
+        help_text=_(
+            "Update this mapped user field on every successful authentication. By default, mapped fields are only set on user creation."
+        ),
     )
 
     class Meta:
-        verbose_name = _("identity provider attribute")
-        verbose_name_plural = _("identity provider attributes")
+        verbose_name = _("attribute mapping")
+        verbose_name_plural = _("attribute mappings")
         unique_together = [
             ("idp", "saml_attribute"),
         ]

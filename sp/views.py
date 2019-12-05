@@ -1,6 +1,3 @@
-from onelogin.saml2.auth import OneLogin_Saml2_Auth
-from onelogin.saml2.settings import OneLogin_Saml2_Settings
-
 from django.contrib.auth import REDIRECT_FIELD_NAME
 from django.core import signing
 from django.http import HttpResponse
@@ -8,6 +5,8 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
+from onelogin.saml2.auth import OneLogin_Saml2_Auth
+from onelogin.saml2.settings import OneLogin_Saml2_Settings
 
 from .models import IdP
 
@@ -54,7 +53,9 @@ def acs(request, idp_slug):
             if user == request.user:
                 return redirect(idp.get_login_redirect(state.get("redir")))
             else:
-                return render(request, "sp/unauth.html", {"idp": idp, "verify": True}, status=401)
+                return render(
+                    request, "sp/unauth.html", {"nameid": idp.get_nameid(saml), "idp": idp, "verify": True}, status=401
+                )
         else:
             user = idp.authenticate(request, saml)
             if user:
@@ -63,7 +64,9 @@ def acs(request, idp_slug):
                 idp.save(update_fields=("last_login",))
                 return redirect(idp.get_login_redirect(state.get("redir")))
             else:
-                return render(request, "sp/unauth.html", {"idp": idp, "verify": False}, status=401)
+                return render(
+                    request, "sp/unauth.html", {"nameid": idp.get_nameid(saml), "idp": idp, "verify": False}, status=401
+                )
 
 
 def login(request, idp_slug, test=False, verify=False):

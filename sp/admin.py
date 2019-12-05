@@ -30,7 +30,7 @@ class IdPAdmin(admin.ModelAdmin):
     actions = ("import_metadata", "generate_certificates")
     inlines = (IdPUserDefaultValueInline, IdPAttributeInline)
     fieldsets = (
-        (None, {"fields": ("name", "slug", "base_url", "notes", "is_active")}),
+        (None, {"fields": ("name", "slug", "base_url", "entity_id", "notes", "is_active")}),
         (
             "SP Settings",
             {"fields": ("contact_name", "contact_email", "x509_certificate", "private_key", "certificate_expires")},
@@ -39,14 +39,19 @@ class IdPAdmin(admin.ModelAdmin):
             "IdP Metadata",
             {"fields": ("metadata_url", "verify_metadata_cert", "metadata_xml", "lowercase_encoding", "last_import")},
         ),
-        ("Logins", {"fields": ("respect_expiration", "login_redirect", "last_login")}),
+        (
+            "Logins",
+            {"fields": ("auth_case_sensitive", "create_users", "respect_expiration", "login_redirect", "last_login")},
+        ),
         ("Advanced", {"classes": ("collapse",), "fields": ("authenticate_method", "login_method")}),
     )
     prepopulated_fields = {"slug": ("name",)}
     readonly_fields = ("last_import", "last_login")
 
     def get_changeform_initial_data(self, request):
-        return {"base_url": "{}://{}".format(request.scheme, request.get_host())}
+        return {
+            "base_url": "{}://{}{}".format(request.scheme, request.get_host(), request.META["SCRIPT_NAME"].rstrip("/"))
+        }
 
     def generate_certificates(self, request, queryset):
         for idp in queryset:
