@@ -2,10 +2,15 @@ from __future__ import unicode_literals
 
 from django.contrib import admin
 
-from .models import IdP, IdPAttribute
+from .models import IdP, IdPAttribute, IdPUserDefaultValue
 
 
 class IdPAttributeInline(admin.TabularInline):
+    model = IdPAttribute
+    extra = 0
+
+
+class IdPUserDefaultValueInline(admin.TabularInline):
     model = IdPAttribute
     extra = 0
 
@@ -23,7 +28,7 @@ class IdPAdmin(admin.ModelAdmin):
     )
     list_filter = ("is_active",)
     actions = ("import_metadata", "generate_certificates")
-    inlines = (IdPAttributeInline,)
+    inlines = (IdPUserDefaultValueInline, IdPAttributeInline)
     fieldsets = (
         (None, {"fields": ("name", "slug", "base_url", "notes", "is_active")}),
         (
