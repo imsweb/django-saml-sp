@@ -189,6 +189,11 @@ class IdPAttribute(models.Model):
     saml_attribute = models.CharField(max_length=200)
     mapped_name = models.CharField(max_length=200, blank=True)
     is_nameid = models.BooleanField(_("Is NameID"), default=False)
+    always_update = models.BooleanField(
+        _("Always Update"),
+        default=False,
+        help_text='If checked, the mapped_name for this attribute will always be updated upon successful authentication.'
+    )
 
     class Meta:
         verbose_name = _("identity provider attribute")
