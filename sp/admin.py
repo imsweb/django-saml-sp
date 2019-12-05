@@ -11,7 +11,7 @@ class IdPAttributeInline(admin.TabularInline):
 
 
 class IdPUserDefaultValueInline(admin.TabularInline):
-    model = IdPAttribute
+    model = IdPUserDefaultValue
     extra = 0
 
 
