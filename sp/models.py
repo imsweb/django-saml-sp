@@ -186,12 +186,15 @@ class IdPUserDefaultValue(models.Model):
     idp = models.ForeignKey(
         IdP, verbose_name=_("identity provider"), related_name="user_defaults", on_delete=models.CASCADE
     )
-    field = models.CharField(max_length=200, unique=True)
+    field = models.CharField(max_length=200)
     value = models.CharField(max_length=200)
 
     class Meta:
         verbose_name = _("identity provider user default value")
         verbose_name_plural = _("identity provider user default values")
+        unique_together = [
+            ("idp", "field"),
+        ]
 
     def __str__(self):
         return "{} -> {}".format(self.field, self.value)
