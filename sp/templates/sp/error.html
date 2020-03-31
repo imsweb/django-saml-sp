@@ -10,11 +10,13 @@
         <h1 class="mt-2 mb-4 pb-2 border-bottom">{% trans "SSO Error" %}</h1>
         <p>{{ reason }}</p>
         <p>{% trans "State" %}: <code>{{ state }}</code></p>
-        <ul>
-            {% for err in errors %}
-                <li>{{ err }}</li>
-            {% endfor %}
-        </ul>
+        {% if errors %}
+            <ul>
+                {% for err in errors %}
+                    <li>{{ err }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
     </div>
 </body>
 </html>

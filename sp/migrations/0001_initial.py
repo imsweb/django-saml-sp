@@ -65,7 +65,8 @@ class Migration(migrations.Migration):
                     "respect_expiration",
                     models.BooleanField(
                         default=False,
-                        help_text="Expires the Django session based on the IdP session expiration. Only works when using SESSION_SERIALIZER=PickleSerializer.",
+                        help_text="Expires the Django session based on the IdP session expiration. "
+                        "Only works when using SESSION_SERIALIZER=PickleSerializer.",
                         verbose_name="Respect IdP session expiration",
                     ),
                 ),

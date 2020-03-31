@@ -21,7 +21,10 @@ class IdP(models.Model):
     name = models.CharField(max_length=200)
     slug = models.CharField(max_length=100, unique=True)
     base_url = models.CharField(
-        _("Base URL"), max_length=200, help_text=_("Root URL for the site, including http/https, no trailing slash.")
+        _("Base URL"),
+        max_length=200,
+        help_text=_("Root URL for the site, including http/https, no trailing slash."),
+        default=getattr(settings, "SP_BASE_URL", ""),
     )
     entity_id = models.CharField(
         _("Entity ID"), max_length=200, blank=True, help_text=_("Leave blank to automatically use the metadata URL.")
@@ -52,7 +55,8 @@ class IdP(models.Model):
         _("Respect IdP session expiration"),
         default=False,
         help_text=_(
-            "Expires the Django session based on the IdP session expiration. Only works when using SESSION_SERIALIZER=PickleSerializer."
+            "Expires the Django session based on the IdP session expiration. "
+            "Only works when using SESSION_SERIALIZER=PickleSerializer."
         ),
     )
     login_redirect = models.CharField(
@@ -60,8 +64,10 @@ class IdP(models.Model):
     )
     last_login = models.DateTimeField(null=True, blank=True, default=None)
     is_active = models.BooleanField(default=True)
-    authenticate_method = models.CharField(max_length=200, default="sp.utils.authenticate")
-    login_method = models.CharField(max_length=200, default="sp.utils.login")
+    authenticate_method = models.CharField(
+        max_length=200, default=getattr(settings, "SP_AUTHENTICATE", "sp.utils.authenticate")
+    )
+    login_method = models.CharField(max_length=200, default=getattr(settings, "SP_LOGIN", "sp.utils.login"))
 
     class Meta:
         verbose_name = _("identity provider")
@@ -213,12 +219,15 @@ class IdPAttribute(models.Model):
     )
     saml_attribute = models.CharField(max_length=200)
     mapped_name = models.CharField(max_length=200, blank=True)
-    is_nameid = models.BooleanField(_("Is NameID"), default=False)
+    is_nameid = models.BooleanField(
+        _("Is NameID"), default=False, help_text=_("Check if this should be the unique identifier of the SSO identity.")
+    )
     always_update = models.BooleanField(
         _("Always Update"),
         default=False,
         help_text=_(
-            "Update this mapped user field on every successful authentication. By default, mapped fields are only set on user creation."
+            "Update this mapped user field on every successful authentication. "
+            "By default, mapped fields are only set on user creation."
         ),
     )
 

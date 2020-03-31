@@ -40,7 +40,8 @@ class Migration(migrations.Migration):
             name="always_update",
             field=models.BooleanField(
                 default=False,
-                help_text="Update this mapped user field on every successful authentication. By default, mapped fields are only set on user creation.",
+                help_text="Update this mapped user field on every successful authentication. "
+                "By default, mapped fields are only set on user creation.",
                 verbose_name="Always Update",
             ),
         ),
