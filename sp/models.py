@@ -21,10 +21,7 @@ class IdP(models.Model):
     name = models.CharField(max_length=200)
     slug = models.CharField(max_length=100, unique=True)
     base_url = models.CharField(
-        _("Base URL"),
-        max_length=200,
-        help_text=_("Root URL for the site, including http/https, no trailing slash."),
-        default=getattr(settings, "SP_BASE_URL", ""),
+        _("Base URL"), max_length=200, help_text=_("Root URL for the site, including http/https, no trailing slash.")
     )
     entity_id = models.CharField(
         _("Entity ID"), max_length=200, blank=True, help_text=_("Leave blank to automatically use the metadata URL.")
@@ -64,10 +61,8 @@ class IdP(models.Model):
     )
     last_login = models.DateTimeField(null=True, blank=True, default=None)
     is_active = models.BooleanField(default=True)
-    authenticate_method = models.CharField(
-        max_length=200, default=getattr(settings, "SP_AUTHENTICATE", "sp.utils.authenticate")
-    )
-    login_method = models.CharField(max_length=200, default=getattr(settings, "SP_LOGIN", "sp.utils.login"))
+    authenticate_method = models.CharField(max_length=200, blank=True)
+    login_method = models.CharField(max_length=200, blank=True)
 
     class Meta:
         verbose_name = _("identity provider")
@@ -189,10 +184,12 @@ class IdP(models.Model):
         return redir or self.login_redirect or settings.LOGIN_REDIRECT_URL
 
     def authenticate(self, request, saml):
-        return import_string(self.authenticate_method)(request, self, saml)
+        method = self.authenticate_method or getattr(settings, "SP_AUTHENTICATE", "sp.utils.authenticate")
+        return import_string(method)(request, self, saml)
 
     def login(self, request, user, saml):
-        return import_string(self.login_method)(request, user, self, saml)
+        method = self.login_method or getattr(settings, "SP_LOGIN", "sp.utils.login")
+        return import_string(method)(request, user, self, saml)
 
 
 class IdPUserDefaultValue(models.Model):

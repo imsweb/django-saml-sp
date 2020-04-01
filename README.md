@@ -1,3 +1,8 @@
+## Installation
+
+* `pip install django-saml-sp`
+* Add `sp` to your `INSTALLED_APPS` setting
+
 ## Local Test Application
 
 ### Start the local SimpleSAML IdP
@@ -20,11 +25,17 @@ python manage.py runserver
 
 ## Integration Guide
 
-### Settings
+### Django Settings
 
 * `AUTHENTICATION_BACKENDS` - By default the Django authentication system is used to authenticate and log in users. Add `sp.backends.SAMLAuthenticationBackend` to your `AUTHENTICATION_BACKENDS` setting to authenticate using Django's `User` model. The user is looked up using `User.USERNAME_FIELD` matching the SAML `nameid`, and created if it doesn't already exist. See the *Field Mapping* section below for how to map SAML attributes to `User` attributes.
 * `LOGIN_REDIRECT_URL` - This is the URL users will be redirected to by default after a successful login (or verification). Optional if you set `IdP.login_redirect` or specify a `next` parameter in your login URL.
 * `SESSION_SERIALIZER` - By default, Django uses `django.contrib.sessions.serializers.JSONSerializer`, which does not allow for setting specific expiration dates on sessions. If you want to use the `IdP.respect_expiration` flag to let the IdP dictate when the Django session should expire, you should change this to `django.contrib.sessions.serializers.PickleSerializer`. But if you do not plan on using that feature, leave the default.
+
+### SP Settings
+
+* `SP_IDP_LOADER` - Allow you to specify a custom method for the SP views to retrieve an `IdP` instance given a request and slug.
+* `SP_AUTHENTICATE` - A custom authentication method to use for `IdP` instances that do not specify one. By default, `sp.utils.authenticate` is used (delegating to the auth backend).
+* `SP_LOGIN` - A custom login method to use for `IdP` instances that do not specify one. By default, `sp.utils.login` is used (again, delegating to the auth backend).
 
 ### URLs
 
