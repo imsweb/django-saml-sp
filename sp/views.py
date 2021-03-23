@@ -12,25 +12,32 @@ from onelogin.saml2.settings import OneLogin_Saml2_Settings
 from .utils import get_request_idp
 
 
-def metadata(request, idp_slug):
-    idp = get_request_idp(request, idp_slug)
-    saml_settings = OneLogin_Saml2_Settings(settings=idp.sp_settings, sp_validation_only=True)
+def metadata(request, **kwargs):
+    idp = get_request_idp(request, **kwargs)
+    saml_settings = OneLogin_Saml2_Settings(
+        settings=idp.sp_settings, sp_validation_only=True
+    )
     return HttpResponse(saml_settings.get_sp_metadata(), content_type="text/xml")
 
 
 @csrf_exempt
 @require_POST
-def acs(request, idp_slug):
-    idp = get_request_idp(request, idp_slug)
+def acs(request, **kwargs):
+    idp = get_request_idp(request, **kwargs)
     if request.POST.get("RelayState"):
         try:
             # Login with state relayed from our application.
-            state = signing.loads(request.POST["RelayState"], max_age=300)
+            state = signing.loads(request.POST["RelayState"], max_age=idp.state_timeout)
         except (signing.BadSignature, signing.SignatureExpired) as ex:
             return render(
                 request,
                 "sp/error.html",
-                {"idp": idp, "state": None, "errors": [str(ex)], "reason": "Invalid SSO request signature."},
+                {
+                    "idp": idp,
+                    "state": None,
+                    "errors": [str(ex)],
+                    "reason": "Invalid SSO request signature.",
+                },
                 status=500,
             )
     else:
@@ -43,7 +50,12 @@ def acs(request, idp_slug):
         return render(
             request,
             "sp/error.html",
-            {"idp": idp, "state": state, "errors": errors, "reason": saml.get_last_error_reason()},
+            {
+                "idp": idp,
+                "state": state,
+                "errors": errors,
+                "reason": saml.get_last_error_reason(),
+            },
             status=500,
         )
     else:
@@ -55,7 +67,12 @@ def acs(request, idp_slug):
             return render(
                 request,
                 "sp/test.html",
-                {"idp": idp, "attrs": attrs, "nameid": saml.get_nameid(), "nameid_format": saml.get_nameid_format()},
+                {
+                    "idp": idp,
+                    "attrs": attrs,
+                    "nameid": saml.get_nameid(),
+                    "nameid_format": saml.get_nameid_format(),
+                },
             )
         elif state.get("verify", False):
             user = idp.authenticate(request, saml)
@@ -63,7 +80,10 @@ def acs(request, idp_slug):
                 return redirect(idp.get_login_redirect(state.get("redir")))
             else:
                 return render(
-                    request, "sp/unauth.html", {"nameid": idp.get_nameid(saml), "idp": idp, "verify": True}, status=401
+                    request,
+                    "sp/unauth.html",
+                    {"nameid": idp.get_nameid(saml), "idp": idp, "verify": True},
+                    status=401,
                 )
         else:
             user = idp.authenticate(request, saml)
@@ -77,13 +97,61 @@ def acs(request, idp_slug):
                     return redirect(idp.get_login_redirect(state.get("redir")))
             else:
                 return render(
-                    request, "sp/unauth.html", {"nameid": idp.get_nameid(saml), "idp": idp, "verify": False}, status=401
+                    request,
+                    "sp/unauth.html",
+                    {"nameid": idp.get_nameid(saml), "idp": idp, "verify": False},
+                    status=401,
                 )
 
 
-def login(request, idp_slug, test=False, verify=False):
-    idp = get_request_idp(request, idp_slug)
+def slo(request, **kwargs):
+    idp = get_request_idp(request, **kwargs)
+    saml = OneLogin_Saml2_Auth(idp.prepare_request(request), old_settings=idp.settings)
+    state = request.GET.get("RelayState")
+    redir = saml.process_slo()
+    errors = saml.get_errors()
+    if errors:
+        return render(
+            request,
+            "sp/error.html",
+            {
+                "idp": idp,
+                "state": state,
+                "errors": errors,
+                "reason": saml.get_last_error_reason(),
+            },
+            status=500,
+        )
+    else:
+        idp.logout(request)
+        if not redir:
+            redir = idp.get_logout_redirect(state)
+        return redirect(redir)
+
+
+def login(request, test=False, verify=False, **kwargs):
+    idp = get_request_idp(request, **kwargs)
     saml = OneLogin_Saml2_Auth(idp.prepare_request(request), old_settings=idp.settings)
     reauth = verify or "reauth" in request.GET
-    state = signing.dumps({"test": test, "verify": verify, "redir": request.GET.get(REDIRECT_FIELD_NAME, "")})
+    state = signing.dumps(
+        {
+            "test": test,
+            "verify": verify,
+            "redir": request.GET.get(REDIRECT_FIELD_NAME, ""),
+        }
+    )
+    # TODO: pass name_id_value_req when verifying
     return redirect(saml.login(state, force_authn=reauth))
+
+
+def logout(request, **kwargs):
+    idp = get_request_idp(request, **kwargs)
+    redir = idp.get_logout_redirect(request.GET.get(REDIRECT_FIELD_NAME))
+    saml = OneLogin_Saml2_Auth(idp.prepare_request(request), old_settings=idp.settings)
+    if saml.get_slo_url() and idp.logout_triggers_slo:
+        # If the IdP supports SLO, send it a logout request (it will call our SLO).
+        return redirect(saml.logout(redir))
+    else:
+        # Handle the logout "locally", i.e. log out via django.contrib.auth by default.
+        idp.logout(request)
+        return redirect(redir)

@@ -11,18 +11,24 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.AlterField(
-            model_name="idp", name="authenticate_method", field=models.CharField(blank=True, max_length=200),
+            model_name="idp",
+            name="authenticate_method",
+            field=models.CharField(blank=True, max_length=200),
         ),
         migrations.AlterField(
             model_name="idp",
             name="base_url",
             field=models.CharField(
-                help_text="Root URL for the site, including http/https, no trailing slash.",
+                help_text=(
+                    "Root URL for the site, including http/https, no trailing slash."
+                ),
                 max_length=200,
                 verbose_name="Base URL",
             ),
         ),
         migrations.AlterField(
-            model_name="idp", name="login_method", field=models.CharField(blank=True, max_length=200),
+            model_name="idp",
+            name="login_method",
+            field=models.CharField(blank=True, max_length=200),
         ),
     ]

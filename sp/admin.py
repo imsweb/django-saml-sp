@@ -18,11 +18,10 @@ class IdPUserDefaultValueInline(admin.TabularInline):
 class IdPAdmin(admin.ModelAdmin):
     list_display = (
         "name",
-        "slug",
+        "url_params",
         "last_import",
         "certificate_expires",
         "get_entity_id",
-        "get_acs",
         "is_active",
         "last_login",
     )
@@ -30,27 +29,79 @@ class IdPAdmin(admin.ModelAdmin):
     actions = ("import_metadata", "generate_certificates")
     inlines = (IdPUserDefaultValueInline, IdPAttributeInline)
     fieldsets = (
-        (None, {"fields": ("name", "slug", "base_url", "entity_id", "notes", "is_active")}),
+        (
+            None,
+            {
+                "fields": (
+                    "name",
+                    "url_params",
+                    "base_url",
+                    "entity_id",
+                    "notes",
+                    "is_active",
+                )
+            },
+        ),
         (
             "SP Settings",
-            {"fields": ("contact_name", "contact_email", "x509_certificate", "private_key", "certificate_expires")},
+            {
+                "fields": (
+                    "contact_name",
+                    "contact_email",
+                    "x509_certificate",
+                    "private_key",
+                    "certificate_expires",
+                )
+            },
         ),
         (
             "IdP Metadata",
-            {"fields": ("metadata_url", "verify_metadata_cert", "metadata_xml", "lowercase_encoding", "last_import")},
+            {
+                "fields": (
+                    "metadata_url",
+                    "verify_metadata_cert",
+                    "metadata_xml",
+                    "lowercase_encoding",
+                    "last_import",
+                )
+            },
         ),
         (
             "Logins",
-            {"fields": ("auth_case_sensitive", "create_users", "respect_expiration", "login_redirect", "last_login")},
+            {
+                "fields": (
+                    "auth_case_sensitive",
+                    "create_users",
+                    "respect_expiration",
+                    "logout_triggers_slo",
+                    "login_redirect",
+                    "logout_redirect",
+                    "last_login",
+                )
+            },
         ),
-        ("Advanced", {"classes": ("collapse",), "fields": ("authenticate_method", "login_method")}),
+        (
+            "Advanced",
+            {
+                "classes": ("collapse",),
+                "fields": (
+                    "authenticate_method",
+                    "login_method",
+                    "logout_method",
+                    "state_timeout",
+                ),
+            },
+        ),
     )
-    prepopulated_fields = {"slug": ("name",)}
     readonly_fields = ("last_import", "last_login")
 
     def get_changeform_initial_data(self, request):
         return {
-            "base_url": "{}://{}{}".format(request.scheme, request.get_host(), request.META["SCRIPT_NAME"].rstrip("/"))
+            "base_url": "{}://{}{}".format(
+                request.scheme,
+                request.get_host(),
+                request.META["SCRIPT_NAME"].rstrip("/"),
+            )
         }
 
     def generate_certificates(self, request, queryset):

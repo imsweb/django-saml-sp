@@ -14,13 +14,25 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name="IdP",
             fields=[
-                ("id", models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
                 ("name", models.CharField(max_length=200)),
                 ("slug", models.CharField(max_length=100, unique=True)),
                 (
                     "base_url",
                     models.CharField(
-                        help_text="Root URL for the site, including http/https, no trailing slash.", max_length=200
+                        help_text=(
+                            "Root URL for the site, including http/https, "
+                            "no trailing slash."
+                        ),
+                        max_length=200,
                     ),
                 ),
                 ("contact_name", models.CharField(max_length=100)),
@@ -39,24 +51,36 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "verify_metadata_cert",
-                    models.BooleanField(default=True, verbose_name="Verify metadata URL certificate"),
+                    models.BooleanField(
+                        default=True, verbose_name="Verify metadata URL certificate"
+                    ),
                 ),
                 (
                     "metadata_xml",
                     models.TextField(
                         blank=True,
-                        help_text="Automatically loaded from the metadata URL, if specified. Otherwise input directly.",
+                        help_text=(
+                            "Automatically loaded from the metadata URL, if specified. "
+                            "Otherwise input directly."
+                        ),
                         verbose_name="Metadata XML",
                     ),
                 ),
                 (
                     "lowercase_encoding",
-                    models.BooleanField(default=False, help_text="Check this if the identity provider is ADFS."),
+                    models.BooleanField(
+                        default=False,
+                        help_text="Check this if the identity provider is ADFS.",
+                    ),
                 ),
                 (
                     "saml_settings",
                     models.TextField(
-                        blank=True, editable=False, help_text="Settings imported and used by the python-saml library."
+                        blank=True,
+                        editable=False,
+                        help_text=(
+                            "Settings imported and used by the python-saml library."
+                        ),
                     ),
                 ),
                 ("last_import", models.DateTimeField(blank=True, null=True)),
@@ -65,31 +89,60 @@ class Migration(migrations.Migration):
                     "respect_expiration",
                     models.BooleanField(
                         default=False,
-                        help_text="Expires the Django session based on the IdP session expiration. "
-                        "Only works when using SESSION_SERIALIZER=PickleSerializer.",
+                        help_text=(
+                            "Expires the Django session based on the IdP session "
+                            "expiration. Only works when using "
+                            "SESSION_SERIALIZER=PickleSerializer."
+                        ),
                         verbose_name="Respect IdP session expiration",
                     ),
                 ),
                 (
                     "login_redirect",
                     models.CharField(
-                        blank=True, help_text="URL name or path to redirect after a successful login.", max_length=200
+                        blank=True,
+                        help_text=(
+                            "URL name or path to redirect after a successful login."
+                        ),
+                        max_length=200,
                     ),
                 ),
-                ("last_login", models.DateTimeField(blank=True, default=None, null=True)),
+                (
+                    "last_login",
+                    models.DateTimeField(blank=True, default=None, null=True),
+                ),
                 ("is_active", models.BooleanField(default=True)),
-                ("authenticate_method", models.CharField(default="sp.utils.authenticate", max_length=200)),
-                ("login_method", models.CharField(default="sp.utils.login", max_length=200)),
+                (
+                    "authenticate_method",
+                    models.CharField(default="sp.utils.authenticate", max_length=200),
+                ),
+                (
+                    "login_method",
+                    models.CharField(default="sp.utils.login", max_length=200),
+                ),
             ],
-            options={"verbose_name": "identity provider",},
+            options={
+                "verbose_name": "identity provider",
+            },
         ),
         migrations.CreateModel(
             name="IdPAttribute",
             fields=[
-                ("id", models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
                 ("saml_attribute", models.CharField(max_length=200)),
                 ("mapped_name", models.CharField(blank=True, max_length=200)),
-                ("is_nameid", models.BooleanField(default=False, verbose_name="Is NameID")),
+                (
+                    "is_nameid",
+                    models.BooleanField(default=False, verbose_name="Is NameID"),
+                ),
                 (
                     "idp",
                     models.ForeignKey(

@@ -2,9 +2,10 @@
 *.egg-info
 __pycache__
 .DS_Store
+.project
+.pydevproject
+.vscode
 /db.sqlite3
 /dist
 /build
 /pip-wheel-metadata
-/.project
-/.pydevproject

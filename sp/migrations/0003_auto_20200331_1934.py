@@ -14,7 +14,9 @@ class Migration(migrations.Migration):
             model_name="idp",
             name="base_url",
             field=models.CharField(
-                help_text="Root URL for the site, including http/https, no trailing slash.",
+                help_text=(
+                    "Root URL for the site, including http/https, no trailing slash."
+                ),
                 max_length=200,
                 verbose_name="Base URL",
             ),
@@ -24,7 +26,10 @@ class Migration(migrations.Migration):
             name="is_nameid",
             field=models.BooleanField(
                 default=False,
-                help_text="Check if this should be the unique identifier of the SSO identity.",
+                help_text=(
+                    "Check if this should be the unique identifier of the SSO "
+                    "identity."
+                ),
                 verbose_name="Is NameID",
             ),
         ),
