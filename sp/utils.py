@@ -9,6 +9,7 @@ from django.utils.module_loading import import_string
 from .models import IdP
 
 IDP_SESSION_KEY = "_idpid"
+NAMEID_SESSION_KEY = "_nameid"
 
 
 def authenticate(request, idp, saml):
@@ -17,7 +18,8 @@ def authenticate(request, idp, saml):
 
 def login(request, user, idp, saml):
     auth.login(request, user)
-    set_session_idp(request, idp)
+    # Store the authenticating IdP and actual (not mapped) SAML nameid in the session.
+    set_session_idp(request, idp, saml.get_nameid())
     if idp.respect_expiration:
         if not settings.SESSION_SERIALIZER.endswith("PickleSerializer"):
             raise ImproperlyConfigured(
@@ -50,12 +52,18 @@ def get_session_idp(request):
     return IdP.objects.filter(pk=request.session.get(IDP_SESSION_KEY)).first()
 
 
-def set_session_idp(request, idp):
+def get_session_nameid(request):
+    return request.session.get(NAMEID_SESSION_KEY)
+
+
+def set_session_idp(request, idp, nameid):
     request.session[IDP_SESSION_KEY] = idp.pk
+    request.session[NAMEID_SESSION_KEY] = nameid
 
 
 def clear_session_idp(request):
-    try:
-        del request.session[IDP_SESSION_KEY]
-    except KeyError:
-        pass
+    for key in (IDP_SESSION_KEY, NAMEID_SESSION_KEY):
+        try:
+            del request.session[key]
+        except KeyError:
+            pass

@@ -35,7 +35,7 @@ The test SAML IdP defines the following user accounts you can use for testing:
 
 ### Django Settings
 
-* `AUTHENTICATION_BACKENDS` - By default the Django authentication system is used to authenticate and log in users. Add `sp.backends.SAMLAuthenticationBackend` to your `AUTHENTICATION_BACKENDS` setting to authenticate using Django's `User` model. The user is looked up using `User.USERNAME_FIELD` matching the SAML `nameid`, and created if it doesn't already exist. See the *Field Mapping* section below for how to map SAML attributes to `User` attributes.
+* `AUTHENTICATION_BACKENDS` - By default the Django authentication system is used to authenticate and log in users. Add `sp.backends.SAMLAuthenticationBackend` to your `AUTHENTICATION_BACKENDS` setting to authenticate using Django's `User` model. The user is looked up using `User.USERNAME_FIELD` matching the SAML `nameid`, and optionally created if it doesn't already exist. See the *Field Mapping* section below for how to map SAML attributes to `User` attributes.
 * `LOGIN_REDIRECT_URL` - This is the URL users will be redirected to by default after a successful login (or verification). Optional if you set `IdP.login_redirect` or specify a `next` parameter in your login URL.
 * `LOGOUT_REDIRECT_URL` - This is the URL users will be redirected to by default after a successful logout. Optional if you set `IdP.logout_redirect` or specify a `next` parameter in your logout URL.
 * `SESSION_SERIALIZER` - By default, Django uses `django.contrib.sessions.serializers.JSONSerializer`, which does not allow for setting specific expiration dates on sessions. If you want to use the `IdP.respect_expiration` flag to let the IdP dictate when the Django session should expire, you should change this to `django.contrib.sessions.serializers.PickleSerializer`. But if you do not plan on using that feature, leave the default.
@@ -46,6 +46,7 @@ The test SAML IdP defines the following user accounts you can use for testing:
 * `SP_AUTHENTICATE` - A custom authentication method to use for `IdP` instances that do not specify one. By default, `sp.utils.authenticate` is used (delegating to the auth backend).
 * `SP_LOGIN` - A custom login method to use for `IdP` instances that do not specify one. By default, `sp.utils.login` is used (again, delegating to the auth backend).
 * `SP_LOGOUT` - A custom logout method to use for `IdP` instances that do not specify one. By default, `sp.utils.logout` is used, which simply delegates to Django's `auth.logout`.
+* `SP_UNIQUE_USERNAMES` - When `True` (the default), `SAMLAuthenticationBackend` will generate usernames unique to the `IdP` that authenticated them, both when associating existing users and creating new users. This prevents user accounts from being linked to multiple IDPs (and prevents spoofing if untrusted IDPs can be configured).
 
 ### URLs
 

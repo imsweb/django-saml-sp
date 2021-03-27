@@ -16,6 +16,7 @@ class Migration(migrations.Migration):
             field=models.JSONField(
                 verbose_name="URL Parameters",
                 default=dict,
+                blank=True,
                 help_text="Application-specific URL path parameters.",
                 unique=True,
             ),

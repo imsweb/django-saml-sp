@@ -72,6 +72,7 @@ class IdPAdmin(admin.ModelAdmin):
                 "fields": (
                     "auth_case_sensitive",
                     "create_users",
+                    "associate_users",
                     "respect_expiration",
                     "logout_triggers_slo",
                     "login_redirect",
@@ -85,10 +86,12 @@ class IdPAdmin(admin.ModelAdmin):
             {
                 "classes": ("collapse",),
                 "fields": (
+                    "username_prefix",
+                    "username_suffix",
+                    "state_timeout",
                     "authenticate_method",
                     "login_method",
                     "logout_method",
-                    "state_timeout",
                 ),
             },
         ),

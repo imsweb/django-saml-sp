@@ -9,7 +9,7 @@ from django.views.decorators.http import require_POST
 from onelogin.saml2.auth import OneLogin_Saml2_Auth
 from onelogin.saml2.settings import OneLogin_Saml2_Settings
 
-from .utils import get_request_idp
+from .utils import get_request_idp, get_session_nameid
 
 
 def metadata(request, **kwargs):
@@ -140,8 +140,11 @@ def login(request, test=False, verify=False, **kwargs):
             "redir": request.GET.get(REDIRECT_FIELD_NAME, ""),
         }
     )
-    # TODO: pass name_id_value_req when verifying
-    return redirect(saml.login(state, force_authn=reauth))
+    # When verifying, we want to pass the (unmapped) SAML nameid, stored in the session.
+    # TODO: do we actually want UPN here, or some other specified mapped field? At least
+    # Auth0 is pre-populating the email field with nameid, which is not what we want.
+    nameid = get_session_nameid(request) if verify else None
+    return redirect(saml.login(state, force_authn=reauth, name_id_value_req=nameid))
 
 
 def logout(request, **kwargs):
