@@ -190,6 +190,7 @@ class IdP(models.Model):
                     "url": self.get_acs(),
                     "binding": "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST",
                 },
+                "metadataValidUntil": self.certificate_expires,
                 "singleLogoutService": {
                     "url": self.get_slo(),
                     "binding": "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect",
