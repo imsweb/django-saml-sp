@@ -1,12 +1,15 @@
 import re
+import logging
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.backends import ModelBackend
 from django.core.exceptions import FieldDoesNotExist
+from django.contrib.auth.models import Group
 
 from .models import IdPUser
 
+logger = logging.getLogger(__name__)
 UserModel = get_user_model()
 
 
@@ -76,18 +79,37 @@ class SAMLAuthenticationBackend(ModelBackend):
             )
 
         # Keep track of which fields (if any) were updated.
+        groups = []
         update_fields = []
         for field, values in attrs.items():
             if created or field in always_update:
-                try:
-                    f = UserModel._meta.get_field(field)
-                    # Only update if the field changed. This is a primitive check, but
-                    # will catch most cases.
-                    if values[0] != getattr(user, f.attname):
-                        setattr(user, f.attname, values[0])
-                        update_fields.append(f.name)
-                except FieldDoesNotExist:
-                    pass
+                # if the target field is groups, we updated the m2m relationship
+                if field == 'groups':
+                    if not type(values) in [list, tuple, set]:
+                        logger.error('Could not parsed values for groups, should be a list, a tuple or a set')
+                        continue
+                    saml_groups = set(values)
+                    user_groups = set(user.groups.values_list('name', flat=True))
+                    if user_groups != saml_groups:
+                        groups = saml_groups
+                        # check all the existing group and create if some are missings
+                        db_groups = set(Group.objects.filter(name__in = saml_groups).values_list('name', flat=True))
+                        missings = [
+                            Group(name=name)
+                            for name in saml_groups - db_groups
+                        ]
+                        if missings:
+                            created = Group.objects.bulk_create(missings)
+                else:
+                    try:
+                        f = UserModel._meta.get_field(field)
+                        # Only update if the field changed. This is a primitive check, but
+                        # will catch most cases.
+                        if values[0] != getattr(user, f.attname):
+                            setattr(user, f.attname, values[0])
+                            update_fields.append(f.name)
+                    except FieldDoesNotExist:
+                        logger.error(f'Could not update {f.attname} since it does not exists on the user model')
 
         if created or update_fields:
             # Doing a full clean will make sure the values we set are of the correct
@@ -99,4 +121,6 @@ class SAMLAuthenticationBackend(ModelBackend):
             else:
                 user.save(update_fields=update_fields)
 
+        if groups:
+            user.groups.set(Group.objects.filter(name__in = groups))
         return user
