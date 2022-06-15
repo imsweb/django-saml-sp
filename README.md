@@ -31,6 +31,13 @@ The test SAML IdP defines the following user accounts you can use for testing:
 | 2 | user2 | user2pass | group2 | user2@example.com |
 
 
+### Sustainsys Stub IdP
+
+The bootstrap command also creates a `stub` IdP which authenticates via
+https://stubidp.sustainsys.com. This is a good option if you don't want to run your own
+local identity provider for testing.
+
+
 ## Integration Guide
 
 ### Django Settings
