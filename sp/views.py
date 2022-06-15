@@ -133,18 +133,23 @@ def login(request, test=False, verify=False, **kwargs):
     idp = get_request_idp(request, **kwargs)
     saml = OneLogin_Saml2_Auth(idp.prepare_request(request), old_settings=idp.settings)
     reauth = verify or "reauth" in request.GET
-    state = signing.dumps(
-        {
-            "test": test,
-            "verify": verify,
-            "redir": request.GET.get(REDIRECT_FIELD_NAME, ""),
-        }
-    )
+    redir = request.GET.get(REDIRECT_FIELD_NAME, "")
+    # Make state object as small as possible. Mostly because the IdP stub I use for
+    # testing (https://stubidp.sustainsys.com) only allows 80 characters.
+    state = {}
+    if redir:
+        state["redir"] = redir
+    if test:
+        state["test"] = 1
+    if verify:
+        state["verify"] = 1
     # When verifying, we want to pass the (unmapped) SAML nameid, stored in the session.
     # TODO: do we actually want UPN here, or some other specified mapped field? At least
     # Auth0 is pre-populating the email field with nameid, which is not what we want.
     nameid = get_session_nameid(request) if verify else None
-    return redirect(saml.login(state, force_authn=reauth, name_id_value_req=nameid))
+    return redirect(
+        saml.login(signing.dumps(state), force_authn=reauth, name_id_value_req=nameid)
+    )
 
 
 def logout(request, **kwargs):

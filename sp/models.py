@@ -15,7 +15,7 @@ from django.db import models
 from django.urls import NoReverseMatch, reverse
 from django.utils import timezone
 from django.utils.module_loading import import_string
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 from onelogin.saml2.idp_metadata_parser import OneLogin_Saml2_IdPMetadataParser
 
 
@@ -122,6 +122,10 @@ class IdP(models.Model):
         default=60,
         help_text=_("Time (in seconds) the SAML login request state is valid for."),
     )
+    require_attributes = models.BooleanField(
+        default=True,
+        help_text=_("Ensures the IdP provides attributes on responses."),
+    )
 
     class Meta:
         verbose_name = _("identity provider")
@@ -196,6 +200,10 @@ class IdP(models.Model):
                 },
                 "x509cert": self.x509_certificate,
                 "privateKey": self.private_key,
+            },
+            "security": {
+                "wantAttributeStatement": self.require_attributes,
+                "metadataValidUntil": self.certificate_expires,
             },
             "contactPerson": {
                 "technical": {
