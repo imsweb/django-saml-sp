@@ -90,6 +90,8 @@ class IdPAdmin(admin.ModelAdmin):
                     "username_suffix",
                     "state_timeout",
                     "require_attributes",
+                    "authn_comparison",
+                    "authn_context",
                     "authenticate_method",
                     "login_method",
                     "logout_method",

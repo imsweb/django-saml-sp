@@ -19,6 +19,10 @@ from django.utils.translation import gettext_lazy as _
 from onelogin.saml2.idp_metadata_parser import OneLogin_Saml2_IdPMetadataParser
 
 
+def _json_true():
+    return True
+
+
 class IdP(models.Model):
     name = models.CharField(max_length=200)
     url_params = models.JSONField(
@@ -126,6 +130,18 @@ class IdP(models.Model):
         default=True,
         help_text=_("Ensures the IdP provides attributes on responses."),
     )
+    authn_comparison = models.CharField(
+        max_length=100,
+        default="exact",
+        help_text=_("The Comparison attribute on RequestedAuthnContext."),
+    )
+    authn_context = models.JSONField(
+        default=_json_true,
+        help_text=_(
+            "true (urn:oasis:names:tc:SAML:2.0:ac:classes:PasswordProtectedTransport), "
+            "false, or a list of AuthnContextClassRef names."
+        ),
+    )
 
     class Meta:
         verbose_name = _("identity provider")
@@ -204,6 +220,8 @@ class IdP(models.Model):
             "security": {
                 "wantAttributeStatement": self.require_attributes,
                 "metadataValidUntil": self.certificate_expires,
+                "requestedAuthnContextComparison": self.authn_comparison,
+                "requestedAuthnContext": self.authn_context,
             },
             "contactPerson": {
                 "technical": {
