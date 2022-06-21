@@ -18,7 +18,6 @@ class Migration(migrations.Migration):
                 default=None,
                 null=True,
                 help_text="Application-specific URL path parameters.",
-                unique=True,
             ),
         ),
     ]

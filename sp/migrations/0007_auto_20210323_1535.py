@@ -18,7 +18,6 @@ class Migration(migrations.Migration):
                 default=dict,
                 blank=True,
                 help_text="Application-specific URL path parameters.",
-                unique=True,
             ),
         ),
     ]

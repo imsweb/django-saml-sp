@@ -29,7 +29,6 @@ class IdP(models.Model):
         _("URL Parameters"),
         default=dict,
         blank=True,
-        unique=True,
         help_text=_("Application-specific URL path parameters."),
     )
     base_url = models.CharField(
