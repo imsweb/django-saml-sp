@@ -121,6 +121,8 @@ class IdP(models.Model):
     authenticate_method = models.CharField(max_length=200, blank=True)
     login_method = models.CharField(max_length=200, blank=True)
     logout_method = models.CharField(max_length=200, blank=True)
+    prepare_request_method = models.CharField(max_length=200, blank=True)
+    update_user_method = models.CharField(max_length=200, blank=True)
     state_timeout = models.IntegerField(
         default=60,
         help_text=_("Time (in seconds) the SAML login request state is valid for."),
@@ -188,15 +190,10 @@ class IdP(models.Model):
         return self.get_url("sp-idp-logout")
 
     def prepare_request(self, request):
-        return {
-            "https": "on" if request.is_secure() else "off",
-            "http_host": request.get_host(),
-            "script_name": request.path_info,
-            "server_port": 443 if request.is_secure() else request.get_port(),
-            "get_data": request.GET.copy(),
-            "post_data": request.POST.copy(),
-            "lowercase_urlencoding": self.lowercase_encoding,
-        }
+        method = self.prepare_request_method or getattr(
+            settings, "SP_PREPARE_REQUEST", "sp.utils.prepare_request"
+        )
+        return import_string(method)(request, self)
 
     @property
     def sp_settings(self):
@@ -312,6 +309,16 @@ class IdP(models.Model):
     def logout(self, request):
         method = self.logout_method or getattr(settings, "SP_LOGOUT", "sp.utils.logout")
         return import_string(method)(request, self)
+
+    def update_user(self, request, saml, user, created=None):
+        method = self.update_user_method or getattr(
+            settings, "SP_UPDATE_USER", "sp.utils.update_user"
+        )
+        return (
+            import_string(method)(request, self, saml, user, created=created)
+            if method
+            else user
+        )
 
 
 class IdPUserDefaultValue(models.Model):

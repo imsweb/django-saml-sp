@@ -2,7 +2,7 @@ import datetime
 
 from django.conf import settings
 from django.contrib import auth
-from django.core.exceptions import ImproperlyConfigured
+from django.core.exceptions import FieldDoesNotExist, ImproperlyConfigured
 from django.shortcuts import get_object_or_404
 from django.utils.module_loading import import_string
 
@@ -38,6 +38,51 @@ def login(request, user, idp, saml):
 def logout(request, idp):
     auth.logout(request)
     clear_session_idp(request)
+
+
+def prepare_request(request, idp):
+    return {
+        "https": "on" if request.is_secure() else "off",
+        "http_host": request.get_host(),
+        "script_name": request.path_info,
+        "server_port": 443 if request.is_secure() else request.get_port(),
+        "get_data": request.GET.copy(),
+        "post_data": request.POST.copy(),
+        "lowercase_urlencoding": idp.lowercase_encoding,
+    }
+
+
+def update_user(request, idp, saml, user, created=None):
+    # A dictionary of SAML attributes, mapped to field names via IdPAttribute.
+    attrs = idp.mapped_attributes(saml)
+    # The set of mapped attributes that should always be updated on the user.
+    always_update = set(
+        idp.attributes.filter(always_update=True).values_list("mapped_name", flat=True)
+    )
+    # For users created by this backend, set initial user default values.
+    if created:
+        attrs.update(
+            {default.field: [default.value] for default in idp.user_defaults.all()}
+        )
+    # Keep track of which fields (if any) were updated.
+    update_fields = []
+    for field, values in attrs.items():
+        if created or field in always_update:
+            try:
+                f = user._meta.get_field(field)
+                # Only update if the field changed. This is a primitive check, but
+                # will catch most cases.
+                if values[0] != getattr(user, f.attname):
+                    setattr(user, f.attname, values[0])
+                    update_fields.append(f.name)
+            except FieldDoesNotExist:
+                pass
+    if created or update_fields:
+        # Doing a full clean will make sure the values we set are of the correct
+        # types before saving.
+        user.full_clean(validate_unique=False)
+        user.save()
+    return user
 
 
 def get_request_idp(request, **kwargs):

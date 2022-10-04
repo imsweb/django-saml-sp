@@ -95,6 +95,8 @@ class IdPAdmin(admin.ModelAdmin):
                     "authenticate_method",
                     "login_method",
                     "logout_method",
+                    "prepare_request_method",
+                    "update_user_method",
                 ),
             },
         ),

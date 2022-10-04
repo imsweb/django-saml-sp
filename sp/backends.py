@@ -3,7 +3,6 @@ import re
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.backends import ModelBackend
-from django.core.exceptions import FieldDoesNotExist
 
 from .models import IdPUser
 
@@ -30,8 +29,6 @@ class SAMLAuthenticationBackend(ModelBackend):
     def authenticate(self, request, idp=None, saml=None):
         # The nameid (potentially mapped) to associate a User with an IdP.
         nameid = idp.get_nameid(saml)
-        # A dictionary of SAML attributes, mapped to field names via IdPAttribute.
-        attrs = idp.mapped_attributes(saml)
         created = False
 
         try:
@@ -62,41 +59,14 @@ class SAMLAuthenticationBackend(ModelBackend):
                 # This can happen with case-insensitive auth.
                 return None
 
-        # The set of mapped attributes that should always be updated on the user.
-        always_update = set(
-            idp.attributes.filter(always_update=True).values_list(
-                "mapped_name", flat=True
-            )
-        )
+        user = self.update_user(request, idp, saml, user, created)
 
-        # For users created by this backend, set initial user default values.
         if created:
-            attrs.update(
-                {default.field: [default.value] for default in idp.user_defaults.all()}
-            )
-
-        # Keep track of which fields (if any) were updated.
-        update_fields = []
-        for field, values in attrs.items():
-            if created or field in always_update:
-                try:
-                    f = UserModel._meta.get_field(field)
-                    # Only update if the field changed. This is a primitive check, but
-                    # will catch most cases.
-                    if values[0] != getattr(user, f.attname):
-                        setattr(user, f.attname, values[0])
-                        update_fields.append(f.name)
-                except FieldDoesNotExist:
-                    pass
-
-        if created or update_fields:
-            # Doing a full clean will make sure the values we set are of the correct
-            # types before saving.
-            user.full_clean(validate_unique=False)
-            if created:
-                user.save()
-                idp.users.create(nameid=nameid, user=user)
-            else:
-                user.save(update_fields=update_fields)
+            idp.users.create(nameid=nameid, user=user)
 
         return user
+
+    def update_user(self, request, idp, saml, user, created):
+        # By default just call through to IdP.update_user, but provide an easy place
+        # to customize this behavior for subclasses.
+        return idp.update_user(request, saml, user, created)

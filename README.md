@@ -53,6 +53,8 @@ local identity provider for testing.
 * `SP_AUTHENTICATE` - A custom authentication method to use for `IdP` instances that do not specify one. By default, `sp.utils.authenticate` is used (delegating to the auth backend).
 * `SP_LOGIN` - A custom login method to use for `IdP` instances that do not specify one. By default, `sp.utils.login` is used (again, delegating to the auth backend).
 * `SP_LOGOUT` - A custom logout method to use for `IdP` instances that do not specify one. By default, `sp.utils.logout` is used, which simply delegates to Django's `auth.logout`.
+* `SP_PREPARE_REQUEST` - A custom prepare_request method to use for `IdP` instances that do not specify one. By default, `sp.utils.prepare_request` is used.
+* `SP_UPDATE_USER` - A custom update_user method to use for `IdP` instances that do not specify one. By default, `sp.utils.update_user` is used, which updates user fields based on mapped SAML attributes when users are created, or when the attributes are set to always update.
 * `SP_UNIQUE_USERNAMES` - When `True` (the default), `SAMLAuthenticationBackend` will generate usernames unique to the `IdP` that authenticated them, both when associating existing users and creating new users. This prevents user accounts from being linked to multiple IDPs (and prevents spoofing if untrusted IDPs can be configured).
 
 ### URLs
