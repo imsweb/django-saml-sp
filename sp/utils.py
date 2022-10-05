@@ -1,5 +1,6 @@
 import datetime
 
+import django
 from django.conf import settings
 from django.contrib import auth
 from django.core.exceptions import FieldDoesNotExist, ImproperlyConfigured
@@ -21,10 +22,14 @@ def login(request, user, idp, saml):
     # Store the authenticating IdP and actual (not mapped) SAML nameid in the session.
     set_session_idp(request, idp, saml.get_nameid())
     if idp.respect_expiration:
-        if not settings.SESSION_SERIALIZER.endswith("PickleSerializer"):
+        if (
+            django.VERSION[:2] < (4, 1)
+            and settings.SESSION_SERIALIZER
+            == "django.contrib.sessions.serializers.JSONSerializer"
+        ):
             raise ImproperlyConfigured(
-                "IdP-based session expiration is only supported with the "
-                "PickleSerializer SESSION_SERIALIZER."
+                "IdP-based session expiration is not supported using the "
+                "JSONSerializer SESSION_SERIALIZER when using Django < 4.1."
             )
         try:
             dt = datetime.datetime.fromtimestamp(
