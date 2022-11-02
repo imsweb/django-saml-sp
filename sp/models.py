@@ -23,6 +23,10 @@ def _json_true():
     return True
 
 
+def _default_authn_context_names_list():
+    return ["urn:oasis:names:tc:SAML:2.0:ac:classes:PasswordProtectedTransport"]
+
+
 class IdP(models.Model):
     name = models.CharField(max_length=200)
     url_params = models.JSONField(
@@ -137,9 +141,9 @@ class IdP(models.Model):
         help_text=_("The Comparison attribute on RequestedAuthnContext."),
     )
     authn_context = models.JSONField(
-        default=_json_true,
+        default=_default_authn_context_names_list,
         help_text=_(
-            "true (urn:oasis:names:tc:SAML:2.0:ac:classes:PasswordProtectedTransport), "
+            "true (generates urn:oasis:names:tc:SAML:2.0:ac:classes:PasswordProtectedTransport in python-saml), "
             "false, or a list of AuthnContextClassRef names."
         ),
     )
