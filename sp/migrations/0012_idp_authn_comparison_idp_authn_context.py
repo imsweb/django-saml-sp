@@ -4,6 +4,8 @@ from django.db import migrations, models
 
 import sp.models
 
+PPT = "urn:oasis:names:tc:SAML:2.0:ac:classes:PasswordProtectedTransport"
+
 
 class Migration(migrations.Migration):
 
@@ -25,8 +27,10 @@ class Migration(migrations.Migration):
             model_name="idp",
             name="authn_context",
             field=models.JSONField(
-                default=sp.models._default_authn_context_names_list, 
-                help_text="true (generates urn:oasis:names:tc:SAML:2.0:ac:classes:PasswordProtectedTransport in python-saml), false, or a list of AuthnContextClassRef names."
+                default=sp.models._default_authn_context_names_list,
+                help_text=(
+                    f"true ({PPT}), false, or a list of AuthnContextClassRef names."
+                ),
             ),
         ),
     ]
