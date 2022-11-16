@@ -27,7 +27,7 @@ class Migration(migrations.Migration):
             model_name="idp",
             name="authn_context",
             field=models.JSONField(
-                default=sp.models._default_authn_context_names_list,
+                default=sp.models._default_authn_context,
                 help_text=(
                     f"true ({PPT}), false, or a list of AuthnContextClassRef names."
                 ),

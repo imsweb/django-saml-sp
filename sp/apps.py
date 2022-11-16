@@ -6,4 +6,3 @@ class SPConfig(AppConfig):
     name = "sp"
     verbose_name = _("SAML SP")
     default_auto_field = "django.db.models.AutoField"
-

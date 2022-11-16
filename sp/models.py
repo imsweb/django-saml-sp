@@ -19,11 +19,7 @@ from django.utils.translation import gettext_lazy as _
 from onelogin.saml2.idp_metadata_parser import OneLogin_Saml2_IdPMetadataParser
 
 
-def _json_true():
-    return True
-
-
-def _default_authn_context_names_list():
+def _default_authn_context():
     return ["urn:oasis:names:tc:SAML:2.0:ac:classes:PasswordProtectedTransport"]
 
 
@@ -141,9 +137,9 @@ class IdP(models.Model):
         help_text=_("The Comparison attribute on RequestedAuthnContext."),
     )
     authn_context = models.JSONField(
-        default=_default_authn_context_names_list,
+        default=_default_authn_context,
         help_text=_(
-            "true (generates urn:oasis:names:tc:SAML:2.0:ac:classes:PasswordProtectedTransport in python-saml), "
+            "true (urn:oasis:names:tc:SAML:2.0:ac:classes:PasswordProtectedTransport), "
             "false, or a list of AuthnContextClassRef names."
         ),
     )
