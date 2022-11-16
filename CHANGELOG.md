@@ -1,3 +1,15 @@
+## 0.6.1
+
+* Fix an issue with migrations on Oracle (#21).
+
+
+## 0.6.0
+
+* Allow customization of `prepare_request` via a new `SP_PREPARE_REQUEST` setting, and a new `IdP.prepare_request_method` field.
+* Allow customization of how users are created and updated via a new `SP_UPDATE_USER` setting, and a new `IdP.update_user_method` field. Also make `SAMLAuthenticationBackend` more subclassing-friendly by having an `update_user` method available to override.
+* Support IdP-based session expiration with `JSONSerializer` when using Django 4.1 or later.
+
+
 ## 0.5.0
 
 * Removed `IdP.slug` in favor of an `IdP.url_params` JSON field containing the URL parameters that uniquely identify a configured IdP. Since unique JSON fields are not supported on all databases, you should ensure the the parameters are unique in your application.
