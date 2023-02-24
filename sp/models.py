@@ -257,7 +257,7 @@ class IdP(models.Model):
             .not_valid_before(now)
             .not_valid_after(self.certificate_expires)
             .add_extension(basic_contraints, critical=False)
-            .sign(key, hashes.SHA1(), backend)
+            .sign(key, hashes.SHA256(), backend)
         )
         self.x509_certificate = cert.public_bytes(serialization.Encoding.PEM).decode(
             "ascii"
