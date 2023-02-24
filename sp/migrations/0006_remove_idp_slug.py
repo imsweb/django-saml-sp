@@ -12,7 +12,6 @@ def move_slug(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("sp", "0005_auto_20210323_1526"),
     ]

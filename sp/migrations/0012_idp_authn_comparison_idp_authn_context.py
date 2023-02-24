@@ -8,7 +8,6 @@ PPT = "urn:oasis:names:tc:SAML:2.0:ac:classes:PasswordProtectedTransport"
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("sp", "0011_idp_require_attributes"),
     ]

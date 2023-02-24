@@ -17,6 +17,11 @@
 
             <dt>{% trans "Name ID" %}</dt>
             <dd>{{ nameid }}</dd>
+
+            {% if redir %}
+                <dt>{% trans "Redirect" %}</dt>
+                <dd><a href="{{ redir }}">{{ redir }}</a></dd>
+            {% endif %}
         </dl>
 
         <div class="table-responsive">

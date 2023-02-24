@@ -1,3 +1,9 @@
+## 0.7.0
+
+* Updated certificate signing algorithm to SHA256 (#23).
+* Refactored usage of `RelayState` to not do unnecessary signing. This parameter is limited to 80 characters, almost all of which were being taken by the signature and timestamp, leaving very little room for redirect URLs.
+
+
 ## 0.6.1
 
 * Fix an issue with migrations on Oracle (#21).

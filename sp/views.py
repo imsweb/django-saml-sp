@@ -1,5 +1,4 @@
 from django.contrib.auth import REDIRECT_FIELD_NAME
-from django.core import signing
 from django.http import HttpResponse
 from django.http.response import HttpResponseBase
 from django.shortcuts import redirect, render
@@ -24,25 +23,7 @@ def metadata(request, **kwargs):
 @require_POST
 def acs(request, **kwargs):
     idp = get_request_idp(request, **kwargs)
-    if request.POST.get("RelayState"):
-        try:
-            # Login with state relayed from our application.
-            state = signing.loads(request.POST["RelayState"], max_age=idp.state_timeout)
-        except (signing.BadSignature, signing.SignatureExpired) as ex:
-            return render(
-                request,
-                "sp/error.html",
-                {
-                    "idp": idp,
-                    "state": None,
-                    "errors": [str(ex)],
-                    "reason": "Invalid SSO request signature.",
-                },
-                status=500,
-            )
-    else:
-        # IdP-initiated login.
-        state = {"test": False, "verify": False, "redir": ""}
+    state = request.POST.get("RelayState")
     saml = OneLogin_Saml2_Auth(idp.prepare_request(request), old_settings=idp.settings)
     saml.process_response()
     errors = saml.get_errors()
@@ -59,7 +40,7 @@ def acs(request, **kwargs):
             status=500,
         )
     else:
-        if state.get("test", False):
+        if state and state.startswith("test:"):
             attrs = []
             for saml_attr, value in saml.get_attributes().items():
                 attr, created = idp.attributes.get_or_create(saml_attribute=saml_attr)
@@ -72,17 +53,23 @@ def acs(request, **kwargs):
                     "attrs": attrs,
                     "nameid": saml.get_nameid(),
                     "nameid_format": saml.get_nameid_format(),
+                    "redir": state[5:],
                 },
             )
-        elif state.get("verify", False):
+        elif state and state.startswith("verify:"):
             user = idp.authenticate(request, saml)
             if user == request.user:
-                return redirect(idp.get_login_redirect(state.get("redir")))
+                # TODO: add a hook here
+                return redirect(idp.get_login_redirect(state[7:]))
             else:
                 return render(
                     request,
                     "sp/unauth.html",
-                    {"nameid": idp.get_nameid(saml), "idp": idp, "verify": True},
+                    {
+                        "nameid": idp.get_nameid(saml),
+                        "idp": idp,
+                        "verify": True,
+                    },
                     status=401,
                 )
         else:
@@ -94,12 +81,16 @@ def acs(request, **kwargs):
                     idp.login(request, user, saml)
                     idp.last_login = timezone.now()
                     idp.save(update_fields=("last_login",))
-                    return redirect(idp.get_login_redirect(state.get("redir")))
+                    return redirect(idp.get_login_redirect(state))
             else:
                 return render(
                     request,
                     "sp/unauth.html",
-                    {"nameid": idp.get_nameid(saml), "idp": idp, "verify": False},
+                    {
+                        "nameid": idp.get_nameid(saml),
+                        "idp": idp,
+                        "verify": False,
+                    },
                     status=401,
                 )
 
@@ -134,22 +125,18 @@ def login(request, test=False, verify=False, **kwargs):
     saml = OneLogin_Saml2_Auth(idp.prepare_request(request), old_settings=idp.settings)
     reauth = verify or "reauth" in request.GET
     redir = request.GET.get(REDIRECT_FIELD_NAME, "")
-    # Make state object as small as possible. Mostly because the IdP stub I use for
-    # testing (https://stubidp.sustainsys.com) only allows 80 characters.
-    state = {}
-    if redir:
-        state["redir"] = redir
+    # SAML only allows RelayState to be 80 characters, make them count.
     if test:
-        state["test"] = 1
-    if verify:
-        state["verify"] = 1
+        state = "test:" + redir
+    elif verify:
+        state = "verify:" + redir
+    else:
+        state = redir
     # When verifying, we want to pass the (unmapped) SAML nameid, stored in the session.
     # TODO: do we actually want UPN here, or some other specified mapped field? At least
     # Auth0 is pre-populating the email field with nameid, which is not what we want.
     nameid = get_session_nameid(request) if verify else None
-    return redirect(
-        saml.login(signing.dumps(state), force_authn=reauth, name_id_value_req=nameid)
-    )
+    return redirect(saml.login(state, force_authn=reauth, name_id_value_req=nameid))
 
 
 def logout(request, **kwargs):
