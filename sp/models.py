@@ -143,9 +143,11 @@ class IdP(models.Model):
             "false, or a list of AuthnContextClassRef names."
         ),
     )
+    sort_order = models.IntegerField(default=0)
 
     class Meta:
         verbose_name = _("identity provider")
+        ordering = ("sort_order", "name")
 
     def __str__(self):
         return self.name

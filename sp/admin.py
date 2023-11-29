@@ -24,6 +24,7 @@ class IdPAdmin(admin.ModelAdmin):
         "get_entity_id",
         "is_active",
         "last_login",
+        "sort_order",
     )
     list_filter = ("is_active",)
     actions = ("import_metadata", "generate_certificates")
@@ -39,6 +40,7 @@ class IdPAdmin(admin.ModelAdmin):
                     "entity_id",
                     "notes",
                     "is_active",
+                    "sort_order",
                 )
             },
         ),
