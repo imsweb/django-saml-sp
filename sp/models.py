@@ -96,10 +96,7 @@ class IdP(models.Model):
     respect_expiration = models.BooleanField(
         _("Respect IdP session expiration"),
         default=False,
-        help_text=_(
-            "Expires the Django session based on the IdP session expiration. "
-            "Only works when using SESSION_SERIALIZER=PickleSerializer."
-        ),
+        help_text=_("Expires the Django session based on the IdP session expiration."),
     )
     logout_triggers_slo = models.BooleanField(
         _("Logout triggers SLO"),
@@ -143,6 +140,8 @@ class IdP(models.Model):
             "false, or a list of AuthnContextClassRef names."
         ),
     )
+    logout_request_signed = models.BooleanField(default=False)
+    logout_response_signed = models.BooleanField(default=False)
     sort_order = models.IntegerField(default=0)
 
     class Meta:
@@ -220,6 +219,8 @@ class IdP(models.Model):
                 "metadataValidUntil": self.certificate_expires,
                 "requestedAuthnContextComparison": self.authn_comparison,
                 "requestedAuthnContext": self.authn_context,
+                "logoutRequestSigned": self.logout_request_signed,
+                "logoutResponseSigned": self.logout_response_signed,
             },
             "contactPerson": {
                 "technical": {

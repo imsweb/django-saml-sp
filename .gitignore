@@ -5,6 +5,7 @@ __pycache__
 .project
 .pydevproject
 .vscode
+.nova
 /db.sqlite3
 /dist
 /build

@@ -8,7 +8,7 @@ from django.views.decorators.http import require_POST
 from onelogin.saml2.auth import OneLogin_Saml2_Auth
 from onelogin.saml2.settings import OneLogin_Saml2_Settings
 
-from .utils import get_request_idp, get_session_nameid
+from .utils import get_request_idp, get_session_nameid, get_session_nameid_format
 
 
 def metadata(request, **kwargs):
@@ -145,7 +145,13 @@ def logout(request, **kwargs):
     saml = OneLogin_Saml2_Auth(idp.prepare_request(request), old_settings=idp.settings)
     if saml.get_slo_url() and idp.logout_triggers_slo:
         # If the IdP supports SLO, send it a logout request (it will call our SLO).
-        return redirect(saml.logout(redir))
+        return redirect(
+            saml.logout(
+                redir,
+                name_id=get_session_nameid(request),
+                name_id_format=get_session_nameid_format(request),
+            )
+        )
     else:
         # Handle the logout "locally", i.e. log out via django.contrib.auth by default.
         idp.logout(request)

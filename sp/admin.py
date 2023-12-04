@@ -23,10 +23,11 @@ class IdPAdmin(admin.ModelAdmin):
         "certificate_expires",
         "get_entity_id",
         "is_active",
-        "last_login",
         "sort_order",
+        "last_login",
     )
     list_filter = ("is_active",)
+    list_editable = ("sort_order", "is_active")
     actions = ("import_metadata", "generate_certificates")
     inlines = (IdPUserDefaultValueInline, IdPAttributeInline)
     fieldsets = (
@@ -94,6 +95,8 @@ class IdPAdmin(admin.ModelAdmin):
                     "require_attributes",
                     "authn_comparison",
                     "authn_context",
+                    "logout_request_signed",
+                    "logout_response_signed",
                     "authenticate_method",
                     "login_method",
                     "logout_method",

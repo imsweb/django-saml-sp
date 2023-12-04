@@ -11,6 +11,7 @@ from .models import IdP
 
 IDP_SESSION_KEY = "_idpid"
 NAMEID_SESSION_KEY = "_nameid"
+NAMEID_FORMAT_SESSION_KEY = "_nameidfmt"
 
 
 def authenticate(request, idp, saml):
@@ -20,7 +21,7 @@ def authenticate(request, idp, saml):
 def login(request, user, idp, saml):
     auth.login(request, user)
     # Store the authenticating IdP and actual (not mapped) SAML nameid in the session.
-    set_session_idp(request, idp, saml.get_nameid())
+    set_session_idp(request, idp, saml.get_nameid(), saml.get_nameid_format())
     if idp.respect_expiration:
         if (
             django.VERSION[:2] < (4, 1)
@@ -106,13 +107,19 @@ def get_session_nameid(request):
     return request.session.get(NAMEID_SESSION_KEY)
 
 
-def set_session_idp(request, idp, nameid):
+def get_session_nameid_format(request):
+    return request.session.get(NAMEID_FORMAT_SESSION_KEY)
+
+
+def set_session_idp(request, idp, nameid, nameid_format=None):
     request.session[IDP_SESSION_KEY] = idp.pk
     request.session[NAMEID_SESSION_KEY] = nameid
+    if nameid_format:
+        request.session[NAMEID_FORMAT_SESSION_KEY] = nameid_format
 
 
 def clear_session_idp(request):
-    for key in (IDP_SESSION_KEY, NAMEID_SESSION_KEY):
+    for key in (IDP_SESSION_KEY, NAMEID_SESSION_KEY, NAMEID_FORMAT_SESSION_KEY):
         try:
             del request.session[key]
         except KeyError:

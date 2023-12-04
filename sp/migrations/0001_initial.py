@@ -90,8 +90,7 @@ class Migration(migrations.Migration):
                         default=False,
                         help_text=(
                             "Expires the Django session based on the IdP session "
-                            "expiration. Only works when using "
-                            "SESSION_SERIALIZER=PickleSerializer."
+                            "expiration."
                         ),
                         verbose_name="Respect IdP session expiration",
                     ),
