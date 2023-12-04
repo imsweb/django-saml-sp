@@ -1,3 +1,9 @@
+## 0.8.0
+
+* Send `nameid` and `nameid_format` on SLO requests (#25).
+* Add a `sort_order` to the `IdP` model.
+
+
 ## 0.7.0
 
 * Updated certificate signing algorithm to SHA256 (#23).
