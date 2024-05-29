@@ -51,6 +51,7 @@ class IdPAdmin(admin.ModelAdmin):
                 "fields": (
                     "contact_name",
                     "contact_email",
+                    "authn_requests_signed",
                     "x509_certificate",
                     "private_key",
                     "certificate_expires",

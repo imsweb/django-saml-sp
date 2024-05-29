@@ -13,6 +13,8 @@ from .utils import get_request_idp, get_session_nameid, get_session_nameid_forma
 
 def metadata(request, **kwargs):
     idp = get_request_idp(request, **kwargs)
+    print(idp.sp_settings)
+    
     saml_settings = OneLogin_Saml2_Settings(
         settings=idp.sp_settings, sp_validation_only=True
     )
