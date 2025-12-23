@@ -26,8 +26,7 @@ class Migration(migrations.Migration):
             field=models.BooleanField(
                 default=False,
                 help_text=(
-                    "Check if this should be the unique identifier of the SSO "
-                    "identity."
+                    "Check if this should be the unique identifier of the SSO identity."
                 ),
                 verbose_name="Is NameID",
             ),

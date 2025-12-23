@@ -1,3 +1,8 @@
+## 0.9.0
+
+* Switch to [uv](https://github.com/astral-sh/uv)
+
+
 ## 0.8.0
 
 * Send `nameid` and `nameid_format` on SLO requests (#25).
